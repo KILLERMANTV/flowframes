@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Flowframes.MiscUtils;
 
 namespace Flowframes.Main
 {
@@ -45,23 +46,10 @@ namespace Flowframes.Main
             Logger.Log("Done running this step.");
         }
 
-        public static async Task ExtractSceneChanges()
-        {
-            string scenesPath = Path.Combine(current.tempFolder, Paths.scenesDir);
-            if (!IOUtils.TryDeleteIfExists(scenesPath))
-            {
-                InterpolateUtils.ShowMessage("Failed to delete existing scenes folder - Make sure no file is opened in another program!", "Error");
-                return;
-            }
-            Program.mainForm.SetStatus("Extracting scenes from video...");
-            await FfmpegExtract.ExtractSceneChanges(current.inPath, scenesPath, current.inFps);
-            await Task.Delay(10);
-        }
-
         public static async Task ExtractFramesStep()
         {
-            if (!current.inputIsFrames)        // Input is video - extract frames first
-                await ExtractSceneChanges();
+            // if (Config.GetBool("scnDetect") && !current.inputIsFrames)        // Input is video - extract frames first
+            //     await ExtractSceneChanges();
 
             if (!IOUtils.TryDeleteIfExists(current.framesFolder))
             {
@@ -69,10 +57,9 @@ namespace Flowframes.Main
                 return;
             }
 
-            currentInputFrameCount = await InterpolateUtils.GetInputFrameCountAsync(current.inPath);
-            AiProcess.filenameMap.Clear();
+            currentInputFrameCount = await GetFrameCountCached.GetFrameCountAsync(current.inPath);
 
-            await GetFrames(true);
+            await GetFrames();
             await PostProcessFrames(true);
         }
 
@@ -82,7 +69,7 @@ namespace Flowframes.Main
 
             current.framesFolder = Path.Combine(current.tempFolder, Paths.framesDir);
 
-            if (!Directory.Exists(current.framesFolder) || IOUtils.GetAmountOfFiles(current.framesFolder, false, "*.png") < 2)
+            if (IOUtils.GetAmountOfFiles(current.framesFolder, false, "*" + current.framesExt) < 2)
             {
                 InterpolateUtils.ShowMessage("There are no extracted frames that can be interpolated!\nDid you run the extraction step?", "Error");
                 return;
@@ -93,25 +80,20 @@ namespace Flowframes.Main
                 return;
             }
 
-            currentInputFrameCount = await InterpolateUtils.GetInputFrameCountAsync(current.inPath);
-
-            // TODO: Check if this works lol, remove if it does
-            //if (Config.GetBool("sbsAllowAutoEnc"))
-            //    nextOutPath = Path.Combine(currentOutPath, Path.GetFileNameWithoutExtension(current.inPath) + IOUtils.GetAiSuffix(current.ai, current.interpFactor) + InterpolateUtils.GetExt(current.outMode));
+            currentInputFrameCount = await GetFrameCountCached.GetFrameCountAsync(current.inPath);
 
             if (Config.GetBool("sbsAllowAutoEnc") && !(await InterpolateUtils.CheckEncoderValid())) return;
 
             if (canceled) return;
             Program.mainForm.SetStatus("Running AI...");
             await RunAi(current.interpFolder, current.ai, true);
-            await IOUtils.ReverseRenaming(current.framesFolder, AiProcess.filenameMap);   // Get timestamps back
-            AiProcess.filenameMap.Clear();
+            await FrameRename.Unrename();   // Get timestamps back
             Program.mainForm.SetProgress(0);
         }
 
         public static async Task CreateOutputVid()
         {
-            if (!Directory.Exists(current.interpFolder) || IOUtils.GetAmountOfFiles(current.interpFolder, false) < 2)
+            if (IOUtils.GetAmountOfFiles(current.interpFolder, false) < 2)
             {
                 Cancel($"There are no interpolated frames to encode!\n\nDid you delete the folder?");
                 return;
@@ -119,7 +101,7 @@ namespace Flowframes.Main
 
             if (!(await InterpolateUtils.CheckEncoderValid())) return;
 
-            string[] outFrames = IOUtils.GetFilesSorted(current.interpFolder, $"*.{InterpolateUtils.GetOutExt()}");
+            string[] outFrames = IOUtils.GetFilesSorted(current.interpFolder, current.interpExt);
 
             if (outFrames.Length > 0 && !IOUtils.CheckImageValid(outFrames[0]))
             {
@@ -128,8 +110,7 @@ namespace Flowframes.Main
                 return;
             }
 
-            string outPath = Path.Combine(current.outPath, Path.GetFileNameWithoutExtension(current.inPath) + IOUtils.GetCurrentExportSuffix() + FFmpegUtils.GetExt(current.outMode));
-            await CreateVideo.Export(current.interpFolder, outPath, current.outMode, true);
+            await CreateVideo.Export(current.interpFolder, current.outPath, current.outMode, true);
         }
 
         public static async Task Reset()

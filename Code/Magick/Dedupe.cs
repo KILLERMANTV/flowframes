@@ -113,7 +113,7 @@ namespace Flowframes.Magick
                             if (!testRun)
                             {
                                 framesToDelete.Add(frame2);
-                                if (debugLog) Logger.Log("[Deduplication] Deleted " + Path.GetFileName(frame2));
+                                if (debugLog) Logger.Log("Deduplication: Deleted " + Path.GetFileName(frame2));
                                 hasEncounteredAnyDupes = true;
                             }
                             statsFramesDeleted++;
@@ -133,7 +133,7 @@ namespace Flowframes.Magick
                 if (sw.ElapsedMilliseconds >= 500 || (i + 1) == framePaths.Length)   // Print every 0.5s (or when done)
                 {
                     sw.Restart();
-                    Logger.Log($"[Deduplication] Running de-duplication ({i}/{framePaths.Length}), deleted {statsFramesDeleted} ({(((float)statsFramesDeleted / framePaths.Length) * 100f).ToString("0")}%) duplicate frames so far...", false, true);
+                    Logger.Log($"Deduplication: Running de-duplication ({i}/{framePaths.Length}), deleted {statsFramesDeleted} ({(((float)statsFramesDeleted / framePaths.Length) * 100f).ToString("0")}%) duplicate frames so far...", false, true);
                     Program.mainForm.SetProgress((int)Math.Round(((float)i / framePaths.Length) * 100f));
                     if (imageCache.Count > bufferSize || (imageCache.Count > 50 && OSUtils.GetFreeRamMb() < 3500))
                         ClearCache();
@@ -165,13 +165,13 @@ namespace Flowframes.Magick
 
             if (Interpolate.canceled) return;
 
-            int framesLeft = IOUtils.GetAmountOfFiles(path, false, $"*.png");
+            int framesLeft = IOUtils.GetAmountOfFiles(path, false, "*" + Interpolate.current.framesExt);
             int framesDeleted = framePaths.Length - framesLeft;
             float percentDeleted = ((float)framesDeleted / framePaths.Length) * 100f;
             string keptPercent = $"{(100f - percentDeleted).ToString("0.0")}%";
 
             if (skipped)
-                Logger.Log($"[Deduplication] First {skipAfterNoDupesFrames} frames did not have any duplicates - Skipping the rest!", false, true);
+                Logger.Log($"Deduplication: First {skipAfterNoDupesFrames} frames did not have any duplicates - Skipping the rest!", false, true);
             else
                 Logger.Log($"[Deduplication]{testStr} Done. Kept {framesLeft} ({keptPercent}) frames, deleted {framesDeleted} frames.", false, true);
 
@@ -207,7 +207,7 @@ namespace Flowframes.Magick
 
         public static async Task CreateDupesFile (string framesPath, int lastFrameNum)
         {
-            string infoFile = Path.Combine(framesPath.GetParentDir(), $"dupes.ini");
+            string infoFile = Path.Combine(framesPath.GetParentDir(), "dupes.ini");
             string fileContent = "";
 
             FileInfo[] frameFiles = IOUtils.GetFileInfosSorted(framesPath, false, "*.png");

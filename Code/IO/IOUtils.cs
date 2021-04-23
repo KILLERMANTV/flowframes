@@ -1,10 +1,9 @@
 ﻿using Flowframes.Data;
 using Flowframes.Main;
+using Flowframes.Media;
 using Flowframes.MiscUtils;
 using Flowframes.UI;
 using Force.Crc32;
-using Microsoft.WindowsAPICodePack.Shell;
-using Standart.Hash.xxHash;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -13,9 +12,9 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.VisualBasic.Logging;
 
 namespace Flowframes.IO
 {
@@ -30,40 +29,35 @@ namespace Flowframes.IO
 		public static string[] ReadLines(string path)
 		{
 			List<string> lines = new List<string>();
-			using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 0x1000, FileOptions.SequentialScan))
-			using (var sr = new StreamReader(fs, Encoding.UTF8))
+			using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite, 0x1000, FileOptions.SequentialScan))
+			
+            using (var reader = new StreamReader(stream, Encoding.UTF8))
 			{
 				string line;
-				while ((line = sr.ReadLine()) != null)
+				while ((line = reader.ReadLine()) != null)
 					lines.Add(line);
 			}
+
 			return lines.ToArray();
 		}
 
 		public static bool IsPathDirectory(string path)
 		{
 			if (path == null)
-			{
 				throw new ArgumentNullException("path");
-			}
-			path = path.Trim();
+
+            path = path.Trim();
+
 			if (Directory.Exists(path))
-			{
 				return true;
-			}
-			if (File.Exists(path))
-			{
+
+            if (File.Exists(path))
 				return false;
-			}
-			if (new string[2]
-			{
-				"\\",
-				"/"
-			}.Any((string x) => path.EndsWith(x)))
-			{
+
+            if (new string[2] {"\\", "/"}.Any((string x) => path.EndsWith(x)))
 				return true;
-			}
-			return string.IsNullOrWhiteSpace(Path.GetExtension(path));
+
+            return string.IsNullOrWhiteSpace(Path.GetExtension(path));
 		}
 
 		public static bool IsFileValid(string path)
@@ -132,11 +126,13 @@ namespace Flowframes.IO
 		{
 			int counter = 1;
 			DirectoryInfo d = new DirectoryInfo(dir);
-			FileInfo[] files = null;
+			FileInfo[] files;
+
 			if (recursive)
 				files = d.GetFiles(wildcard, SearchOption.AllDirectories);
 			else
 				files = d.GetFiles(wildcard, SearchOption.TopDirectoryOnly);
+
 			foreach (FileInfo file in files)
 			{
 				ReplaceInFilename(file.FullName, textToFind, textToReplace);
@@ -157,25 +153,18 @@ namespace Flowframes.IO
 			File.Move(path, targetPath);
 		}
 
-		public static int GetFilenameCounterLength(string file, string prefixToRemove = "")
-		{
-			string filenameNoExt = Path.GetFileNameWithoutExtension(file);
-			if (!string.IsNullOrEmpty(prefixToRemove))
-				filenameNoExt = filenameNoExt.Replace(prefixToRemove, "");
-			string onlyNumbersFilename = Regex.Replace(filenameNoExt, "[^.0-9]", "");
-			return onlyNumbersFilename.Length;
-		}
-
-		public static int GetAmountOfFiles (string path, bool recursive, string wildcard = "*")
+        public static int GetAmountOfFiles (string path, bool recursive, string wildcard = "*")
         {
             try
             {
-				DirectoryInfo d = new DirectoryInfo(path);
+                DirectoryInfo d = new DirectoryInfo(path);
 				FileInfo[] files = null;
+
 				if (recursive)
 					files = d.GetFiles(wildcard, SearchOption.AllDirectories);
 				else
 					files = d.GetFiles(wildcard, SearchOption.TopDirectoryOnly);
+
 				return files.Length;
 			}
 			catch
@@ -192,7 +181,9 @@ namespace Flowframes.IO
 			}
 			catch (Exception e)
 			{
-				Logger.Log($"Failed to move '{source}' to '{target}' (Overwrite: {overwrite}): {e.Message}, !showLog");
+				if(showLog)
+				    Logger.Log($"Failed to move '{source}' to '{target}' (Overwrite: {overwrite}): {e.Message}, !showLog");
+
 				return false;
 			}
 
@@ -217,21 +208,29 @@ namespace Flowframes.IO
 			return true;
 		}
 
-		public static void RenameCounterDir(string path, bool inverse = false)
+		public static async Task RenameCounterDir(string path, int startAt = 0, int zPad = 8, bool inverse = false)
 		{
-			int counter = 1;
+            Stopwatch sw = new Stopwatch();
+            sw.Restart();
+			int counter = startAt;
 			DirectoryInfo d = new DirectoryInfo(path);
 			FileInfo[] files = d.GetFiles();
 			var filesSorted = files.OrderBy(n => n);
+
 			if (inverse)
 				filesSorted.Reverse();
+
 			foreach (FileInfo file in files)
 			{
 				string dir = new DirectoryInfo(file.FullName).Parent.FullName;
-				int filesDigits = (int)Math.Floor(Math.Log10((double)files.Length) + 1);
-				File.Move(file.FullName, Path.Combine(dir, counter.ToString().PadLeft(filesDigits, '0') + Path.GetExtension(file.FullName)));
+				File.Move(file.FullName, Path.Combine(dir, counter.ToString().PadLeft(zPad, '0') + Path.GetExtension(file.FullName)));
 				counter++;
-				//if (counter % 100 == 0) Program.Print("Renamed " + counter + " files...");
+
+                if (sw.ElapsedMilliseconds > 100)
+                {
+                    await Task.Delay(1);
+                    sw.Restart();
+                }
 			}
 		}
 
@@ -294,44 +293,35 @@ namespace Flowframes.IO
 			}
 		}
 
-		public static async Task<float> GetVideoFramerate (string path)
+		public static async Task<Fraction> GetVideoFramerate (string path)
         {
-			float fps = 0;
-            try
-            {
-				ShellFile shellFile = ShellFile.FromFilePath(path);
-				fps = (float)shellFile.Properties.System.Video.FrameRate.Value / 1000f;
+            Fraction fps = new Fraction();
+
+			try
+			{
+				fps = await FfmpegCommands.GetFramerate(path);
 				Logger.Log("Detected FPS of " + Path.GetFileName(path) + " as " + fps + " FPS", true);
-				if (fps <= 0)
-					throw new Exception("FPS is 0.");
 			}
 			catch
             {
-				Logger.Log("Failed to read FPS - Trying alternative method...", true);
-				try
-				{
-					fps = await FfmpegCommands.GetFramerate(path);
-					Logger.Log("Detected FPS of " + Path.GetFileName(path) + " as " + fps + " FPS", true);
-				}
-				catch
-                {
-					Logger.Log("Failed to read FPS - Please enter it manually.");
-				}
+				Logger.Log("Failed to read FPS - Please enter it manually.");
 			}
+
 			return fps;
 		}
 
-		public static float GetVideoFramerateForDir(string path)
+		public static Fraction GetVideoFramerateForDir(string path)
 		{
-			float fps = 0;
+            Fraction fps = new Fraction();
+
             try
             {
 				string parentDir = path.GetParentDir();
 				string fpsFile = Path.Combine(parentDir, "fps.ini");
-				fps = float.Parse(ReadLines(fpsFile)[0]);
+                fps = new Fraction(float.Parse(ReadLines(fpsFile)[0]));
 				Logger.Log($"Got {fps} FPS from file: " + fpsFile);
 
-				float guiFps = Program.mainForm.GetCurrentSettings().inFps;
+				Fraction guiFps = Program.mainForm.GetCurrentSettings().inFps;
 
 				DialogResult dialogResult = MessageBox.Show("A frame rate file has been found in the parent directory.\n\n" +
 					$"Click \"Yes\" to use frame rate from the file ({fps}) or \"No\" to use current FPS set in GUI ({guiFps})", "Load Frame Rate From fps.ini?", MessageBoxButtons.YesNo);
@@ -346,7 +336,8 @@ namespace Flowframes.IO
 
 		public static async Task<Size> GetVideoOrFramesRes (string path)
         {
-			Size res = new Size();
+			Size res;
+
 			if (!IsPathDirectory(path))     // If path is video
 			{
 				res = GetVideoRes(path);
@@ -356,32 +347,24 @@ namespace Flowframes.IO
 				Image thumb = await MainUiFunctions.GetThumbnail(path);
 				res = new Size(thumb.Width, thumb.Height);
 			}
+
 			return res;
 		}
 
 		public static Size GetVideoRes (string path)
 		{
 			Size size = new Size(0, 0);
+
 			try
 			{
-				ShellFile shellFile = ShellFile.FromFilePath(path);
-				int w = (int)shellFile.Properties.System.Video.FrameWidth.Value;
-				int h = (int)shellFile.Properties.System.Video.FrameHeight.Value;
-				return new Size(w, h);
+				size = FfmpegCommands.GetSize(path);
+				Logger.Log($"Detected video size of {Path.GetFileName(path)} as {size.Width}x{size.Height}", true);
 			}
-			catch (Exception e)
+			catch
 			{
-				Logger.Log($"Failed to read video size ({e.Message}) - Trying alternative method...", true);
-				try
-				{
-					size = FfmpegCommands.GetSize(path);
-					Logger.Log($"Detected video size of {Path.GetFileName(path)} as {size.Width}x{size.Height}", true);
-				}
-				catch
-				{
-					Logger.Log("Failed to read video size!");
-				}
+				Logger.Log("Failed to read video size!");
 			}
+
 			return size;
 		}
 
@@ -416,17 +399,38 @@ namespace Flowframes.IO
 			return false;
         }
 
-		public static string GetCurrentExportSuffix ()
-        {
-			return GetExportSuffix(Interpolate.current.interpFactor, Interpolate.current.ai, Interpolate.current.model);
-		}
-
-		public static string GetExportSuffix(float factor, AI ai, string mdl)
+		public static async Task<string> GetCurrentExportFilename(bool fpsLimit, bool withExt)
 		{
-			string suffix = $"-{factor.ToStringDot()}x-{ai.aiNameShort.ToUpper()}";
-			if (Config.GetBool("modelSuffix"))
-				suffix += $"-{mdl}";
-			return suffix;
+			InterpSettings curr = Interpolate.current;
+			float fps = fpsLimit ? Config.GetFloat("maxFps") : curr.outFps.GetFloat();
+
+            if (curr.outMode == Interpolate.OutMode.VidGif && fps > 50f)
+                fps = 50f;
+
+            Size outRes = await InterpolateUtils.GetOutputResolution(curr.inPath, false, false);
+			string pattern = Config.Get("exportNamePattern");
+			string inName = Interpolate.current.inputIsFrames ? Path.GetFileName(curr.inPath) : Path.GetFileNameWithoutExtension(curr.inPath);
+            bool encodeBoth = Config.GetInt("maxFpsMode") == 0;
+			bool addSuffix = fpsLimit && (!pattern.Contains("[FPS]") && !pattern.Contains("[ROUNDFPS]")) && encodeBoth;
+			string filename = pattern;
+
+			filename = filename.Replace("[NAME]", inName);
+			filename = filename.Replace("[FULLNAME]", Path.GetFileName(curr.inPath));
+            filename = filename.Replace("[FACTOR]", curr.interpFactor.ToStringDot());
+			filename = filename.Replace("[AI]", curr.ai.aiNameShort.ToUpper());
+			filename = filename.Replace("[MODEL]", curr.model);
+			filename = filename.Replace("[FPS]", fps.ToStringDot());
+            filename = filename.Replace("[ROUNDFPS]", fps.RoundToInt().ToString());
+			filename = filename.Replace("[RES]", $"{outRes.Width}x{outRes.Height}");
+			filename = filename.Replace("[H]", $"{outRes.Height}p");
+
+            if (addSuffix)
+				filename += Paths.fpsLimitSuffix;
+
+			if (withExt)
+				filename += FFmpegUtils.GetExt(curr.outMode);
+
+			return filename;
 		}
 
 		public static string GetHighestFrameNumPath (string path)
@@ -458,36 +462,22 @@ namespace Flowframes.IO
             }
 		}
 
-		public static string GetAudioFile (string basePath)
-        {
-			string[] exts = new string[] { "m4a", "wav", "ogg", "mp2", "mp3" };
-
-			foreach(string ext in exts)
-            {
-				string filename = Path.ChangeExtension(basePath, ext);
-				if (File.Exists(filename))
-					return filename;
-			}
-
-			return null;
-		}
-
-		public static async Task<float> GetFpsFolderOrVideo(string path)
+		public static async Task<Fraction> GetFpsFolderOrVideo(string path)
 		{
             try
             {
 				if (IsPathDirectory(path))
 				{
-					float dirFps = GetVideoFramerateForDir(path);
+                    Fraction dirFps = GetVideoFramerateForDir(path);
 
-					if (dirFps > 0)
+					if (dirFps.GetFloat() > 0)
 						return dirFps;
 				}
 				else
 				{
-					float vidFps = await GetVideoFramerate(path);
+                    Fraction vidFps = await GetVideoFramerate(path);
 
-					if (vidFps > 0)
+					if (vidFps.GetFloat() > 0)
 						return vidFps;
 				}
 			}
@@ -496,7 +486,7 @@ namespace Flowframes.IO
 				Logger.Log("GetFpsFolderOrVideo() Error: " + e.Message);
             }
 
-			return 0;
+			return new Fraction();
 		}
 
 		public enum ErrorMode { HiddenLog, VisibleLog, Messagebox }
@@ -554,8 +544,8 @@ namespace Flowframes.IO
 			}
 		}
 
-		public enum Hash { MD5, CRC32, xxHash }
-		public static string GetHash (string path, Hash hashType, bool log = true, bool quick = true)
+		public enum Hash { MD5, CRC32 }
+		public static string GetHash (string path, Hash hashType, bool log = true)
 		{
 			Benchmarker.Start();
 			string hashStr = "";
@@ -582,13 +572,7 @@ namespace Flowframes.IO
 					hashStr = BitConverter.ToUInt32(crc32bytes, 0).ToString();
 				}
 
-				if (hashType == Hash.xxHash)
-				{
-					ulong xxh64 = xxHash64.ComputeHash(stream, 8192, (ulong)GetFilesize(path));
-					hashStr = xxh64.ToString();
-				}
-
-				stream.Close();
+                stream.Close();
 			}
 			catch (Exception e)
             {
@@ -600,10 +584,10 @@ namespace Flowframes.IO
 			return hashStr;
 		}
 
-		public static async Task<string> GetHashAsync(string path, Hash hashType, bool log = true, bool quick = true)
+		public static async Task<string> GetHashAsync(string path, Hash hashType, bool log = true)
 		{
 			await Task.Delay(1);
-			return GetHash(path, hashType, log, quick);
+			return GetHash(path, hashType, log);
 		}
 
 		public static bool CreateDir (string path)		// Returns whether the dir already existed
@@ -655,9 +639,7 @@ namespace Flowframes.IO
             try
             {
 				Image img = GetImage(path);
-				if (img.Width > 1 && img.Height > 1)
-					return true;
-				return false;
+                return (img.Width > 0 && img.Height > 0);
             }
 			catch
             {
@@ -711,6 +693,7 @@ namespace Flowframes.IO
 			// Add file sizes.
 			string[] files;
 			StringComparison ignCase = StringComparison.OrdinalIgnoreCase;
+
 			if (includedExtensions == null)
 				files = Directory.GetFiles(path);
 			else
@@ -754,23 +737,7 @@ namespace Flowframes.IO
 			}
 		}
 
-		public static byte[] GetLastBytes (string path, int startAt, int bytesAmount)
-        {
-			byte[] buffer = new byte[bytesAmount];
-			using (BinaryReader reader = new BinaryReader(new FileStream(path, FileMode.Open)))
-			{
-				reader.BaseStream.Seek(startAt, SeekOrigin.Begin);
-				reader.Read(buffer, 0, bytesAmount);
-			}
-			return buffer;
-		}
-
-		public static bool HasBadChars(string str)
-		{
-			return str != str.StripBadChars();
-		}
-
-		public static void OverwriteFileWithText (string path, string text = "THIS IS A DUMMY FILE - DO NOT DELETE ME")
+        public static void OverwriteFileWithText (string path, string text = "THIS IS A DUMMY FILE - DO NOT DELETE ME")
         {
             try
             {
@@ -781,5 +748,31 @@ namespace Flowframes.IO
 				Logger.Log($"OverwriteWithText failed for '{path}': {e.Message}");
             }
 		}
-	}
+
+		public static long GetDiskSpace(string path, bool mbytes = true)
+		{
+			try
+			{
+				string driveLetter = path.Substring(0, 2);      // Make 'C:/some/random/path' => 'C:' etc
+				DriveInfo[] allDrives = DriveInfo.GetDrives();
+
+				foreach (DriveInfo d in allDrives)
+				{
+					if (d.IsReady && d.Name.StartsWith(driveLetter))
+					{
+						if (mbytes)
+							return (long)(d.AvailableFreeSpace / 1024f / 1000f);
+						else
+							return d.AvailableFreeSpace;
+					}
+				}
+			}
+			catch (Exception e)
+			{
+				Logger.Log("Error trying to get disk space: " + e.Message, true);
+			}
+
+			return 0;
+		}
+    }
 }

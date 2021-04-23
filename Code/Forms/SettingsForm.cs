@@ -25,13 +25,18 @@ namespace Flowframes.Forms
 
         private void SettingsForm_Load(object sender, EventArgs e)
         {
+            MinimumSize = new Size(Width, Height);
+            MaximumSize = new Size(Width, (Height * 1.5f).RoundToInt());
+
             LoadSettings();
             initialized = true;
-            CheckModelCacheSize();
+            Task.Run(() => CheckModelCacheSize());
         }
 
         public async Task CheckModelCacheSize ()
         {
+            await Task.Delay(200);
+
             long modelFoldersBytes = 0;
 
             foreach (string modelFolder in ModelDownloader.GetAllModelFolders())
@@ -47,6 +52,7 @@ namespace Flowframes.Forms
         {
             SaveSettings();
             Program.mainForm.UpdateStepByStepControls();
+            Program.mainForm.LoadQuickSettings();
         }
 
         void SaveSettings ()
@@ -62,21 +68,25 @@ namespace Flowframes.Forms
             // General
             ConfigParser.SaveComboxIndex(processingMode);
             ConfigParser.SaveGuiElement(maxVidHeight, ConfigParser.StringMode.Int);
-            ConfigParser.SaveGuiElement(enableAlpha);
             ConfigParser.SaveComboxIndex(tempFolderLoc);
             ConfigParser.SaveGuiElement(keepTempFolder);
+            ConfigParser.SaveGuiElement(exportNamePattern);
+            ConfigParser.SaveGuiElement(exportNamePatternLoop);
             ConfigParser.SaveGuiElement(delLogsOnStartup);
             ConfigParser.SaveGuiElement(clearLogOnInput);
-            ConfigParser.SaveGuiElement(modelSuffix);
             // Interpolation
             ConfigParser.SaveGuiElement(keepAudio);
             ConfigParser.SaveGuiElement(keepSubs);
+            ConfigParser.SaveGuiElement(keepMeta);
+            ConfigParser.SaveGuiElement(enableAlpha);
+            ConfigParser.SaveGuiElement(jpegFrames);
             ConfigParser.SaveComboxIndex(dedupMode);
             ConfigParser.SaveComboxIndex(mpdecimateMode);
             ConfigParser.SaveGuiElement(dedupThresh);
             ConfigParser.SaveGuiElement(enableLoop);
             ConfigParser.SaveGuiElement(scnDetect);
             ConfigParser.SaveGuiElement(scnDetectValue);
+            ConfigParser.SaveComboxIndex(sceneChangeFillMode);
             ConfigParser.SaveComboxIndex(autoEncMode);
             ConfigParser.SaveGuiElement(sbsAllowAutoEnc);
             // AI
@@ -88,25 +98,27 @@ namespace Flowframes.Forms
             ConfigParser.SaveGuiElement(dainNcnnTilesize, ConfigParser.StringMode.Int);
             // Video Export
             ConfigParser.SaveGuiElement(minOutVidLength, ConfigParser.StringMode.Int);
+            ConfigParser.SaveGuiElement(maxFps);
+            ConfigParser.SaveComboxIndex(maxFpsMode);
+            ConfigParser.SaveComboxIndex(loopMode);
+            ConfigParser.SaveGuiElement(fixOutputDuration);
             ConfigParser.SaveComboxIndex(mp4Enc);
             ConfigParser.SaveGuiElement(h264Crf);
             ConfigParser.SaveGuiElement(h265Crf);
             ConfigParser.SaveGuiElement(vp9Crf);
             ConfigParser.SaveComboxIndex(proResProfile);
             ConfigParser.SaveGuiElement(gifColors);
+            ConfigParser.SaveGuiElement(gifDitherType);
             ConfigParser.SaveGuiElement(aviCodec);
             ConfigParser.SaveGuiElement(aviColors);
-            ConfigParser.SaveGuiElement(maxFps);
-            ConfigParser.SaveComboxIndex(maxFpsMode);
-            ConfigParser.SaveComboxIndex(loopMode);
             // Debugging
             ConfigParser.SaveComboxIndex(cmdDebugMode);
             ConfigParser.SaveGuiElement(autoDedupFrames);
-            ConfigParser.SaveGuiElement(modelsBaseUrl);
+            ConfigParser.SaveGuiElement(mdlBaseUrl);
+            ConfigParser.SaveComboxIndex(audioSubTransferMode);
             ConfigParser.SaveGuiElement(ffEncThreads, ConfigParser.StringMode.Int);
             ConfigParser.SaveGuiElement(ffEncPreset);
             ConfigParser.SaveGuiElement(ffEncArgs);
-            ConfigParser.SaveGuiElement(ffprobeCountFrames);
         }
 
         void LoadSettings()
@@ -114,21 +126,25 @@ namespace Flowframes.Forms
             // General
             ConfigParser.LoadComboxIndex(processingMode);
             ConfigParser.LoadGuiElement(maxVidHeight);
-            ConfigParser.LoadGuiElement(enableAlpha);
             ConfigParser.LoadComboxIndex(tempFolderLoc); ConfigParser.LoadGuiElement(tempDirCustom);
             ConfigParser.LoadGuiElement(delLogsOnStartup);
             ConfigParser.LoadGuiElement(keepTempFolder);
+            ConfigParser.LoadGuiElement(exportNamePattern);
+            ConfigParser.LoadGuiElement(exportNamePatternLoop);
             ConfigParser.LoadGuiElement(clearLogOnInput);
-            ConfigParser.LoadGuiElement(modelSuffix);
             // Interpolation
             ConfigParser.LoadGuiElement(keepAudio);
             ConfigParser.LoadGuiElement(keepSubs);
+            ConfigParser.LoadGuiElement(keepMeta);
+            ConfigParser.LoadGuiElement(enableAlpha);
+            ConfigParser.LoadGuiElement(jpegFrames);
             ConfigParser.LoadComboxIndex(dedupMode);
             ConfigParser.LoadComboxIndex(mpdecimateMode);
             ConfigParser.LoadGuiElement(dedupThresh);
             ConfigParser.LoadGuiElement(enableLoop);
             ConfigParser.LoadGuiElement(scnDetect);
             ConfigParser.LoadGuiElement(scnDetectValue);
+            ConfigParser.LoadComboxIndex(sceneChangeFillMode);
             ConfigParser.LoadComboxIndex(autoEncMode);
             ConfigParser.LoadGuiElement(sbsAllowAutoEnc);
             // AI
@@ -140,25 +156,27 @@ namespace Flowframes.Forms
             ConfigParser.LoadGuiElement(dainNcnnTilesize);
             // Video Export
             ConfigParser.LoadGuiElement(minOutVidLength);
+            ConfigParser.LoadGuiElement(maxFps);
+            ConfigParser.LoadComboxIndex(maxFpsMode);
+            ConfigParser.LoadComboxIndex(loopMode);
+            ConfigParser.LoadGuiElement(fixOutputDuration);
             ConfigParser.LoadComboxIndex(mp4Enc);
             ConfigParser.LoadGuiElement(h264Crf);
             ConfigParser.LoadGuiElement(h265Crf);
             ConfigParser.LoadGuiElement(vp9Crf);
             ConfigParser.LoadComboxIndex(proResProfile);
             ConfigParser.LoadGuiElement(gifColors);
+            ConfigParser.LoadGuiElement(gifDitherType);
             ConfigParser.LoadGuiElement(aviCodec);
             ConfigParser.LoadGuiElement(aviColors);
-            ConfigParser.LoadGuiElement(maxFps);
-            ConfigParser.LoadComboxIndex(maxFpsMode);
-            ConfigParser.LoadComboxIndex(loopMode);
             // Debugging
             ConfigParser.LoadComboxIndex(cmdDebugMode);
             ConfigParser.LoadGuiElement(autoDedupFrames);
-            ConfigParser.LoadGuiElement(modelsBaseUrl);
+            ConfigParser.LoadGuiElement(mdlBaseUrl);
+            ConfigParser.LoadComboxIndex(audioSubTransferMode);
             ConfigParser.LoadGuiElement(ffEncThreads);
             ConfigParser.LoadGuiElement(ffEncPreset);
             ConfigParser.LoadGuiElement(ffEncArgs);
-            ConfigParser.LoadGuiElement(ffprobeCountFrames);
         }
 
         private void tempFolderLoc_SelectedIndexChanged(object sender, EventArgs e)

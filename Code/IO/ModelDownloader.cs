@@ -23,7 +23,7 @@ namespace Flowframes.IO
 
         static string GetMdlUrl (string ai, string model)
         {
-            string baseUrl = Config.Get("modelsBaseUrl");
+            string baseUrl = Config.Get("mdlBaseUrl");
             return Path.Combine(baseUrl, ai.ToLower(), model);
         }
 
@@ -134,7 +134,7 @@ namespace Flowframes.IO
 
             foreach (AI ai in Networks.networks)
             {
-                string aiPkgFolder = PkgUtils.GetPkgFolder(ai.pkg);
+                string aiPkgFolder = Path.Combine(Paths.GetPkgPath(), ai.pkgDir);
                 string modelsFile = Path.Combine(aiPkgFolder, "models.txt");
                 if (!File.Exists(modelsFile)) continue;
 

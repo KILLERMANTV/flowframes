@@ -1,14 +1,11 @@
 ﻿using Flowframes.Data;
 using Flowframes.IO;
 using Flowframes.MiscUtils;
-using Flowframes.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Flowframes.Main
@@ -19,9 +16,8 @@ namespace Flowframes.Main
         static FileInfo[] frameFiles;
         static FileInfo[] frameFilesWithoutLast;
         static List<string> sceneFrames = new List<string>();
-        static string currentFormat = "D8";
         static Dictionary<int, string> frameFileContents = new Dictionary<int, string>();
-        static int lastOutFileCount = 0;
+        static int lastOutFileCount;
 
         public static async Task CreateFrameOrderFile(string framesPath, bool loopEnabled, float times)
         {
@@ -33,71 +29,63 @@ namespace Flowframes.Main
                     file.Delete();
 
                 benchmark.Restart();
-                currentFormat = $"D{Padding.interpFrames}";
-                await CreateEncFile(framesPath, loopEnabled, times, false);
+                await CreateEncFile(framesPath, loopEnabled, times);
                 Logger.Log($"Generating frame order information... Done.", false, true);
                 Logger.Log($"Generated frame order info file in {benchmark.ElapsedMilliseconds} ms", true);
             }
             catch (Exception e)
             {
-                Logger.Log($"Error generating frame order information: {e.Message}");
+                Logger.Log($"Error generating frame order information: {e.Message}\n{e.StackTrace}");
             }
         }
 
         static Dictionary<string, int> dupesDict = new Dictionary<string, int>();
 
-        static void LoadDupesFile (string path)
+        static void LoadDupesFile(string path)
         {
             dupesDict.Clear();
             if (!File.Exists(path)) return;
             string[] dupesFileLines = IOUtils.ReadLines(path);
-            foreach(string line in dupesFileLines)
+            foreach (string line in dupesFileLines)
             {
                 string[] values = line.Split(':');
                 dupesDict.Add(values[0], values[1].GetInt());
             }
         }
 
-        public static async Task CreateEncFile (string framesPath, bool loopEnabled, float interpFactor, bool notFirstRun)
+        public static async Task CreateEncFile(string framesPath, bool loopEnabled, float interpFactor)
         {
             if (Interpolate.canceled) return;
             Logger.Log($"Generating frame order information for {interpFactor}x...", false, true);
 
             bool loop = Config.GetBool("enableLoop");
             bool sceneDetection = true;
-            string ext = InterpolateUtils.GetOutExt();
+            string ext = Interpolate.current.interpExt;
 
             frameFileContents.Clear();
             lastOutFileCount = 0;
 
-            frameFiles = new DirectoryInfo(framesPath).GetFiles($"*.png");
+            frameFiles = new DirectoryInfo(framesPath).GetFiles("*" + Interpolate.current.framesExt);
             frameFilesWithoutLast = frameFiles;
             Array.Resize(ref frameFilesWithoutLast, frameFilesWithoutLast.Length - 1);
-            string vfrFile = Path.Combine(framesPath.GetParentDir(), Paths.GetFrameOrderFilename(interpFactor));
+            string framesFile = Path.Combine(framesPath.GetParentDir(), Paths.GetFrameOrderFilename(interpFactor));
             string fileContent = "";
-            string dupesFile = Path.Combine(framesPath.GetParentDir(), $"dupes.ini");
+            string dupesFile = Path.Combine(framesPath.GetParentDir(), "dupes.ini");
             LoadDupesFile(dupesFile);
 
             string scnFramesPath = Path.Combine(framesPath.GetParentDir(), Paths.scenesDir);
 
             sceneFrames.Clear();
+
             if (Directory.Exists(scnFramesPath))
-                sceneFrames = Directory.GetFiles(scnFramesPath).Select(file => Path.GetFileNameWithoutExtension(file)).ToList();
+                sceneFrames = Directory.GetFiles(scnFramesPath).Select(file => GetNameNoExt(file)).ToList();
 
             bool debug = Config.GetBool("frameOrderDebug", false);
-
-            int interpFramesAmount = (int)interpFactor;     // TODO: This code won't work with fractional factors
-
-            Stopwatch delaySw = new Stopwatch(); delaySw.Start();
-            Stopwatch printSw = new Stopwatch(); printSw.Start();
-
             List<Task> tasks = new List<Task>();
             int linesPerTask = 400 / (int)interpFactor;
             int num = 0;
 
-            linesPerTask = 100000;
-
-            for (int i = 0; i < (frameFilesWithoutLast.Length - 1); i+= linesPerTask)
+            for (int i = 0; i < frameFilesWithoutLast.Length; i += linesPerTask)
             {
                 tasks.Add(GenerateFrameLines(num, i, linesPerTask, (int)interpFactor, loopEnabled, sceneDetection, debug));
                 num++;
@@ -109,61 +97,63 @@ namespace Flowframes.Main
                 fileContent += frameFileContents[x];
 
             lastOutFileCount++;
-            fileContent += $"file '{Paths.interpDir}/{lastOutFileCount.ToString().PadLeft(Padding.interpFrames, '0')}.{ext}'";     // Last frame (source)
+            int lastFrameTimes = Config.GetBool("fixOutputDuration") ? (int)interpFactor : 1;
 
-            if(loop)
-                fileContent = fileContent.Remove(fileContent.LastIndexOf("\n"));
-
-            File.WriteAllText(vfrFile, fileContent);
-
-            if (notFirstRun) return;    // Skip all steps that only need to be done once
+            for(int i = 0; i < lastFrameTimes; i++)
+                fileContent += $"{(i > 0 ? "\n" : "")}file '{Paths.interpDir}/{lastOutFileCount.ToString().PadLeft(Padding.interpFrames, '0')}{ext}'";     // Last frame (source)
 
             if (loop)
-            {
-                int lastFileNumber = frameFiles.Last().Name.GetInt() + 1;
-                string loopFrameTargetPath = Path.Combine(frameFilesWithoutLast.First().FullName.GetParentDir(), lastFileNumber.ToString().PadLeft(Padding.inputFrames, '0') + $".png");
-                if (File.Exists(loopFrameTargetPath))
-                {
-                    if (debug) Logger.Log($"Won't copy loop frame - {Path.GetFileName(loopFrameTargetPath)} already exists.", true);
-                    return;
-                }
-                File.Copy(frameFilesWithoutLast.First().FullName, loopFrameTargetPath);
-                if (debug) Logger.Log($"Copied loop frame to {loopFrameTargetPath}.", true);
-            }
+                fileContent = fileContent.Remove(fileContent.LastIndexOf("\n"));
+
+            File.WriteAllText(framesFile, fileContent);
         }
 
-        static async Task GenerateFrameLines (int number, int startIndex, int count, int factor, bool loopEnabled, bool sceneDetection, bool debug)
+        static async Task GenerateFrameLines(int number, int startIndex, int count, int factor, bool loopEnabled, bool sceneDetection, bool debug)
         {
             int totalFileCount = (startIndex) * factor;
             int interpFramesAmount = factor;
-            string ext = InterpolateUtils.GetOutExt();
+            string ext = Interpolate.current.interpExt;
 
             string fileContent = "";
-            
+
             for (int i = startIndex; i < (startIndex + count); i++)
             {
                 if (Interpolate.canceled) return;
                 if (i >= frameFilesWithoutLast.Length) break;
 
-                string inputFilenameNoExt = Path.GetFileNameWithoutExtension(frameFilesWithoutLast[i].Name);
-                int dupesAmount = dupesDict.ContainsKey(inputFilenameNoExt) ? dupesDict[inputFilenameNoExt] : 0;
-                bool discardThisFrame = (sceneDetection && (i + 2) < frameFilesWithoutLast.Length && sceneFrames.Contains(Path.GetFileNameWithoutExtension(frameFilesWithoutLast[i + 1].Name)));     // i+2 is in scene detection folder, means i+1 is ugly interp frame
-
-                if (loopEnabled && i == (frameFiles.Length - 2))    // If loop is enabled, account for the extra frame for loop continuity
-                    interpFramesAmount = interpFramesAmount * 2;
+                string frameName = GetNameNoExt(frameFilesWithoutLast[i].Name);
+                string frameNameImport = GetNameNoExt(FrameRename.importFilenames[i]);
+                int dupesAmount = dupesDict.ContainsKey(frameNameImport) ? dupesDict[frameNameImport] : 0;
+                bool discardThisFrame = (sceneDetection && i < frameFilesWithoutLast.Length && sceneFrames.Contains(GetNameNoExt(FrameRename.importFilenames[i + 1])));     // i+2 is in scene detection folder, means i+1 is ugly interp frame
 
                 for (int frm = 0; frm < interpFramesAmount; frm++)  // Generate frames file lines
                 {
                     if (discardThisFrame)     // If frame is scene cut frame
                     {
-                        totalFileCount++;
-                        int lastNum = totalFileCount;
-                        fileContent = WriteFrameWithDupes(dupesAmount, fileContent, totalFileCount, ext, debug, $"[In: {inputFilenameNoExt}] [{((frm == 0) ? " Source " : $"Interp {frm}")}] [DiscardNext]");
+                        string frameBeforeScn = i.ToString().PadLeft(Padding.inputFramesRenamed, '0') + Path.GetExtension(FrameRename.importFilenames[i]);
+                        string frameAfterScn = (i + 1).ToString().PadLeft(Padding.inputFramesRenamed, '0') + Path.GetExtension(FrameRename.importFilenames[i + 1]);
+                        string scnChangeNote = $"SCN:{frameBeforeScn}>{frameAfterScn}";
 
-                        for (int dupeCount = 1; dupeCount < interpFramesAmount; dupeCount++)
+                        totalFileCount++;
+                        fileContent = WriteFrameWithDupes(dupesAmount, fileContent, totalFileCount, ext, debug, $"[In: {frameName}] [{((frm == 0) ? " Source " : $"Interp {frm}")}]", scnChangeNote);
+
+                        if (Config.GetInt("sceneChangeFillMode") == 0)      // Duplicate last frame
                         {
-                            totalFileCount++;
-                            fileContent = WriteFrameWithDupes(dupesAmount, fileContent, lastNum, ext, debug, $"[In: {inputFilenameNoExt}] [DISCARDED]");
+                            int lastNum = totalFileCount;
+
+                            for (int dupeCount = 1; dupeCount < interpFramesAmount; dupeCount++)
+                            {
+                                totalFileCount++;
+                                fileContent = WriteFrameWithDupes(dupesAmount, fileContent, lastNum, ext, debug, $"[In: {frameName}] [DISCARDED]");
+                            }
+                        }
+                        else
+                        {
+                            for (int dupeCount = 1; dupeCount < interpFramesAmount; dupeCount++)
+                            {
+                                totalFileCount++;
+                                fileContent = WriteFrameWithDupes(dupesAmount, fileContent, totalFileCount, ext, debug, $"[In: {frameName}] [BLEND FRAME]");
+                            }
                         }
 
                         frm = interpFramesAmount;
@@ -171,26 +161,25 @@ namespace Flowframes.Main
                     else
                     {
                         totalFileCount++;
-                        fileContent = WriteFrameWithDupes(dupesAmount, fileContent, totalFileCount, ext, debug, $"[In: {inputFilenameNoExt}] [{((frm == 0) ? " Source " : $"Interp {frm}")}]");
+                        fileContent = WriteFrameWithDupes(dupesAmount, fileContent, totalFileCount, ext, debug, $"[In: {frameName}] [{((frm == 0) ? " Source " : $"Interp {frm}")}]");
                     }
                 }
             }
 
-            if(totalFileCount > lastOutFileCount)
+            if (totalFileCount > lastOutFileCount)
                 lastOutFileCount = totalFileCount;
 
             frameFileContents[number] = fileContent;
         }
 
-        static string WriteFrameWithDupes (int dupesAmount, string fileContent, int frameNum, string ext, bool debug, string note = "")
+        static string WriteFrameWithDupes(int dupesAmount, string fileContent, int frameNum, string ext, bool debug, string debugNote = "", string forcedNote = "")
         {
             for (int writtenDupes = -1; writtenDupes < dupesAmount; writtenDupes++)      // Write duplicates
-            {
-                if (debug) Logger.Log($"Writing frame {frameNum} (writtenDupes {writtenDupes})", true, false);
-                fileContent += $"file '{Paths.interpDir}/{frameNum.ToString().PadLeft(Padding.interpFrames, '0')}.{ext}'{(debug ? ($" # Dupe {(writtenDupes+1).ToString("000")} {note}").Replace("Dupe 000", "        ") : "" )}\n";
-            }
+                fileContent += $"file '{Paths.interpDir}/{frameNum.ToString().PadLeft(Padding.interpFrames, '0')}{ext}' # {(debug ? ($"Dupe {(writtenDupes + 1).ToString("000")} {debugNote}").Replace("Dupe 000", "        ") : "")}{forcedNote}\n";
 
             return fileContent;
         }
+
+        static string GetNameNoExt (string path) { return Path.GetFileNameWithoutExtension(path); }
     }
 }

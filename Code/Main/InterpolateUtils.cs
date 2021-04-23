@@ -21,16 +21,15 @@ namespace Flowframes.Main
 {
     class InterpolateUtils
     {
-        public static PictureBox preview;
-        public static BigPreviewForm bigPreviewForm;
-
         public static async Task CopyLastFrame(int lastFrameNum)
         {
+            if (I.canceled) return;
+
             try
             {
                 lastFrameNum--;     // We have to do this as extracted frames start at 0, not 1
                 bool frameFolderInput = IOUtils.IsPathDirectory(I.current.inPath);
-                string targetPath = Path.Combine(I.current.framesFolder, lastFrameNum.ToString().PadLeft(Padding.inputFrames, '0') + ".png");
+                string targetPath = Path.Combine(I.current.framesFolder, lastFrameNum.ToString().PadLeft(Padding.inputFrames, '0') + I.current.framesExt);
                 if (File.Exists(targetPath)) return;
 
                 Size res = IOUtils.GetImage(IOUtils.GetFilesSorted(I.current.framesFolder, false).First()).Size;
@@ -49,186 +48,6 @@ namespace Flowframes.Main
             {
                 Logger.Log("CopyLastFrame Error: " + e.Message);
             }
-        }
-
-        public static string GetOutExt(bool withDot = false)
-        {
-            string dotStr = withDot ? "." : "";
-            if (Config.GetBool("jpegInterp"))
-                return dotStr + "jpg";
-            return dotStr + "png";
-        }
-
-        public static int lastFrame;
-        public static int targetFrames;
-        public static string currentOutdir;
-        public static float currentFactor;
-        public static bool progressPaused = false;
-        public static bool progCheckRunning = false;
-
-        public static async void GetProgressByFrameAmount(string outdir, int target)
-        {
-            progCheckRunning = true;
-            targetFrames = target;
-            currentOutdir = outdir;
-            Logger.Log($"Starting GetProgressByFrameAmount() loop for outdir '{currentOutdir}', target is {target} frames", true);
-            bool firstProgUpd = true;
-            Program.mainForm.SetProgress(0);
-            lastFrame = 0;
-            while (Program.busy)
-            {
-                if (!progressPaused && AiProcess.processTime.IsRunning && Directory.Exists(currentOutdir))
-                {
-                    if (firstProgUpd && Program.mainForm.IsInFocus())
-                        Program.mainForm.SetTab("preview");
-
-                    firstProgUpd = false;
-                    string lastFramePath = currentOutdir + "\\" + lastFrame.ToString("00000000") + $".{GetOutExt()}";
-
-                    if (lastFrame > 1)
-                        UpdateInterpProgress(lastFrame, targetFrames, lastFramePath);
-
-                    await Task.Delay((target < 1000) ? 100 : 200);  // Update 10x/sec if interpolating <1k frames, otherwise 5x/sec
-
-                    if (lastFrame >= targetFrames)
-                        break;
-                }
-                else
-                {
-                    await Task.Delay(100);
-                }
-            }
-            progCheckRunning = false;
-            if (I.canceled)
-                Program.mainForm.SetProgress(0);
-        }
-
-        public static void UpdateLastFrameFromInterpOutput(string output)
-        {
-            try
-            {
-                string ncnnStr = I.current.ai.aiName.Contains("NCNN") ? " done" : "";
-                Regex frameRegex = new Regex($@"(?<=.)\d*(?=.{GetOutExt()}{ncnnStr})");
-                if (!frameRegex.IsMatch(output)) return;
-                lastFrame = Math.Max(int.Parse(frameRegex.Match(output).Value), lastFrame);
-            }
-            catch
-            {
-                Logger.Log($"UpdateLastFrameFromInterpOutput: Failed to get progress from '{output}' even though Regex matched!");
-            }
-        }
-
-        public static int interpolatedInputFramesCount;
-
-        public static void UpdateInterpProgress(int frames, int target, string latestFramePath = "")
-        {
-            if (I.canceled) return;
-            interpolatedInputFramesCount = ((frames / I.current.interpFactor).RoundToInt() - 1);
-            ResumeUtils.Save();
-            frames = frames.Clamp(0, target);
-            int percent = (int)Math.Round(((float)frames / target) * 100f);
-            Program.mainForm.SetProgress(percent);
-
-            float generousTime = ((AiProcess.processTime.ElapsedMilliseconds - AiProcess.lastStartupTimeMs) / 1000f);
-            float fps = (float)frames / generousTime;
-            string fpsIn = (fps / currentFactor).ToString("0.00");
-            string fpsOut = fps.ToString("0.00");
-
-            float secondsPerFrame = generousTime / (float)frames;
-            int framesLeft = target - frames;
-            float eta = framesLeft * secondsPerFrame;
-            string etaStr = FormatUtils.Time(new TimeSpan(0, 0, eta.RoundToInt()), false);
-
-            bool replaceLine = Regex.Split(Logger.textbox.Text, "\r\n|\r|\n").Last().Contains("Average Speed: ");
-
-            string logStr = $"Interpolated {frames}/{target} Frames ({percent}%) - Average Speed: {fpsIn} FPS In / {fpsOut} FPS Out - ";
-            logStr += $"Time: {FormatUtils.Time(AiProcess.processTime.Elapsed)} - ETA: {etaStr}";
-            if (AutoEncode.busy) logStr += " - Encoding...";
-            Logger.Log(logStr, false, replaceLine);
-
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(latestFramePath) && frames > currentFactor)
-                {
-                    if (bigPreviewForm == null && !preview.Visible  /* ||Program.mainForm.WindowState != FormWindowState.Minimized */ /* || !Program.mainForm.IsInFocus()*/) return;        // Skip if the preview is not visible or the form is not in focus
-                    Image img = IOUtils.GetImage(latestFramePath);
-                    SetPreviewImg(img);
-                }
-            }
-            catch { }
-        }
-
-        public static async Task DeleteInterpolatedInputFrames()
-        {
-            interpolatedInputFramesCount = 0;
-            string[] inputFrames = IOUtils.GetFilesSorted(I.current.framesFolder);
-
-            for (int i = 0; i < inputFrames.Length; i++)
-            {
-                while (Program.busy && (i + 10) > interpolatedInputFramesCount) await Task.Delay(1000);
-                if (!Program.busy) break;
-                if (i != 0 && i != inputFrames.Length - 1)
-                    IOUtils.OverwriteFileWithText(inputFrames[i]);
-                if (i % 10 == 0) await Task.Delay(10);
-            }
-        }
-
-        public static void SetPreviewImg(Image img)
-        {
-            if (img == null)
-                return;
-
-            preview.Image = img;
-
-            if (bigPreviewForm != null)
-                bigPreviewForm.SetImage(img);
-        }
-
-        public static Dictionary<PseudoUniqueFile, int> frameCountCache = new Dictionary<PseudoUniqueFile, int>();
-        public static async Task<int> GetInputFrameCountAsync(string path)
-        {
-            long filesize = IOUtils.GetFilesize(path);
-            PseudoUniqueFile hash = new PseudoUniqueFile(path, filesize);
-
-            if (filesize > 0 && FrameCountCacheContains(hash))
-            {
-                Logger.Log($"FrameCountCache contains this hash, using cached frame count.", true);
-                return GetFrameCountFromCache(hash);
-            }
-            else
-            {
-                Logger.Log($"Hash not cached, reading frame count.", true);
-            }
-
-            int frameCount;
-
-            if (IOUtils.IsPathDirectory(path))
-                frameCount = IOUtils.GetAmountOfFiles(path, false);
-            else
-                frameCount = await FfmpegCommands.GetFrameCountAsync(path);
-
-            Logger.Log($"Adding hash with frame count {frameCount} to cache.", true);
-            frameCountCache.Add(hash, frameCount);
-
-            return frameCount;
-        }
-
-        private static bool FrameCountCacheContains (PseudoUniqueFile hash)
-        {
-            foreach(KeyValuePair<PseudoUniqueFile, int> entry in frameCountCache)
-                if (entry.Key.path == hash.path && entry.Key.filesize == hash.filesize)
-                    return true;
-
-            return false;
-        }
-
-        private static int GetFrameCountFromCache(PseudoUniqueFile hash)
-        {
-            foreach (KeyValuePair<PseudoUniqueFile, int> entry in frameCountCache)
-                if (entry.Key.path == hash.path && entry.Key.filesize == hash.filesize)
-                    return entry.Value;
-
-            return 0;
         }
 
         public static int GetProgressWaitTime(int numFrames)
@@ -275,7 +94,7 @@ namespace Flowframes.Main
             return Path.Combine(basePath, Path.GetFileNameWithoutExtension(inPath).StripBadChars().Remove(" ").Trunc(30, false) + "-temp");
         }
 
-        public static bool InputIsValid(string inDir, string outDir, float fpsOut, float factor, Interpolate.OutMode outMode)
+        public static bool InputIsValid(string inDir, string outDir, Fraction fpsOut, float factor, I.OutMode outMode)
         {
             bool passes = true;
 
@@ -286,45 +105,48 @@ namespace Flowframes.Main
                 ShowMessage("Input path is not valid!");
                 passes = false;
             }
+
             if (passes && !IOUtils.IsDirValid(outDir))
             {
                 ShowMessage("Output path is not valid!");
                 passes = false;
             }
-            if (passes && /*factor != 2 && factor != 4 && factor != 8*/ factor > 16)
+
+            if (passes && fpsOut.GetFloat() < 1f || fpsOut.GetFloat() > 1000f)
             {
-                ShowMessage("Interpolation factor is not valid!");
+                ShowMessage($"Invalid output frame rate ({fpsOut.GetFloat()}).\nMust be 1-1000.");
                 passes = false;
             }
-            if (passes && outMode == I.OutMode.VidGif && fpsOut > 50 && !(Config.GetFloat("maxFps") != 0 && Config.GetFloat("maxFps") <= 50))
-            {
-                ShowMessage("Invalid output frame rate!\nGIF does not properly support frame rates above 50 FPS.\nPlease use MP4, WEBM or another video format.");
-                passes = false;
-            }
-            if (passes && fpsOut < 1 || fpsOut > 1000)
-            {
-                ShowMessage("Invalid output frame rate - Must be 1-1000.");
-                passes = false;
-            }
+
+            if (outMode == I.OutMode.VidGif && fpsOut.GetFloat() > 50 && !(Config.GetFloat("maxFps") != 0 && Config.GetFloat("maxFps") <= 50))
+                Logger.Log($"Warning: GIF will be encoded at 50 FPS instead of {fpsOut.GetFloat()} as the format doesn't support frame rates that high.");
+
             if (!passes)
                 I.Cancel("Invalid settings detected.", true);
-            return passes;
-        }
 
-        public static void PathAsciiCheck(string path, string pathTitle)
-        {
-            if (IOUtils.HasBadChars(path) || OSUtils.HasNonAsciiChars(path))
-                ShowMessage($"Warning: Your {pathTitle} includes special characters. This might cause problems.");
+            return passes;
         }
 
         public static bool CheckAiAvailable(AI ai)
         {
-            if (!PkgUtils.IsAiAvailable(ai))
+            if (IOUtils.GetAmountOfFiles(Path.Combine(Paths.GetPkgPath(), ai.pkgDir), true) < 1)
             {
                 ShowMessage("The selected AI is not installed!", "Error");
                 I.Cancel("Selected AI not available.", true);
                 return false;
             }
+
+            if (I.current.ai.aiName.ToUpper().Contains("CUDA") && NvApi.gpuList.Count < 1)
+            {
+                ShowMessage("Warning: No Nvidia GPU was detected. CUDA might fall back to CPU!\n\nTry an NCNN implementation instead if you don't have an Nvidia GPU.", "Error");
+                
+                if (!Config.GetBool("allowCudaWithoutDetectedGpu", true))
+                {
+                    I.Cancel("No CUDA-capable graphics card available.", true);
+                    return false;
+                }
+            }
+
             return true;
         }
 
@@ -394,25 +216,24 @@ namespace Flowframes.Main
 
         public static async Task<Size> GetOutputResolution(string inputPath, bool print, bool returnZeroIfUnchanged = false)
         {
-            Size resolution = await IOUtils.GetVideoOrFramesRes(inputPath);
+            Size resolution = await GetMediaResolutionCached.GetSizeAsync(inputPath);
             return GetOutputResolution(resolution, print, returnZeroIfUnchanged);
         }
 
         public static Size GetOutputResolution(Size inputRes, bool print = false, bool returnZeroIfUnchanged = false)
         {
-            int maxHeight = RoundDiv2(Config.GetInt("maxVidHeight"));
+            int maxHeight = RoundDivisibleBy(Config.GetInt("maxVidHeight"), FfmpegCommands.GetPadding());
             if (inputRes.Height > maxHeight)
             {
                 float factor = (float)maxHeight / inputRes.Height;
                 Logger.Log($"Un-rounded downscaled size: {(inputRes.Width * factor).ToString("0.00")}x{Config.GetInt("maxVidHeight")}", true);
-                int width = RoundDiv2((inputRes.Width * factor).RoundToInt());
+                int width = RoundDivisibleBy((inputRes.Width * factor).RoundToInt(), FfmpegCommands.GetPadding());
                 if (print)
                     Logger.Log($"Video is bigger than the maximum - Downscaling to {width}x{maxHeight}.");
                 return new Size(width, maxHeight);
             }
             else
             {
-                //return new Size(RoundDiv2(inputRes.Width), RoundDiv2(inputRes.Height));
                 if (returnZeroIfUnchanged)
                     return new Size();
                 else
@@ -420,11 +241,11 @@ namespace Flowframes.Main
             }
         }
 
-        public static int RoundDiv2(int n)     // Round to a number that's divisible by 2 (for h264 etc)
+        public static int RoundDivisibleBy(int number, int divisibleBy)     // Round to a number that's divisible by 2 (for h264 etc)
         {
-            int a = (n / 2) * 2;    // Smaller multiple
-            int b = a + 2;   // Larger multiple
-            return (n - a > b - n) ? b : a; // Return of closest of two
+            int a = (number / divisibleBy) * divisibleBy;    // Smaller multiple
+            int b = a + divisibleBy;   // Larger multiple
+            return (number - a > b - number) ? b : a; // Return of closest of two
         }
 
         public static bool CanUseAutoEnc(bool stepByStep, InterpSettings current)
@@ -465,7 +286,7 @@ namespace Flowframes.Main
             return true;
         }
 
-        public static async Task<bool> UseUHD()
+        public static async Task<bool> UseUhd()
         {
             return (await GetOutputResolution(I.current.inPath, false)).Height >= Config.GetInt("uhdThresh");
         }
@@ -494,7 +315,7 @@ namespace Flowframes.Main
             }
 
             foreach (string frame in sceneFramesToDelete)
-                IOUtils.TryDeleteIfExists(Path.Combine(sceneFramesPath, frame + ".png"));
+                IOUtils.TryDeleteIfExists(Path.Combine(sceneFramesPath, frame + I.current.framesExt));
         }
     }
 }

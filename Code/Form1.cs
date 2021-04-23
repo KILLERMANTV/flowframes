@@ -1,6 +1,5 @@
 ﻿using Flowframes.Forms;
 using Flowframes.IO;
-using Flowframes.Magick;
 using Flowframes.Main;
 using Flowframes.OS;
 using Flowframes.UI;
@@ -10,71 +9,72 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Windows.Forms;
 using HTAlt.WinForms;
 using Flowframes.Data;
 using Microsoft.WindowsAPICodePack.Taskbar;
-using System.Threading.Tasks;
-using System.Windows.Documents;
 using Flowframes.MiscUtils;
+using System.Threading.Tasks;
 
 namespace Flowframes
 {
     public partial class Form1 : Form
     {
         public bool initialized = false;
+        public bool quickSettingsInitialized = false;
 
         public Form1()
         {
             InitializeComponent();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
             CheckForIllegalCrossThreadCalls = false;
             AutoScaleMode = AutoScaleMode.None;
 
-            if(!File.Exists(Paths.GetVerPath()) && Paths.GetExeDir().ToLower().Contains("temp"))
-            {
-                MessageBox.Show("You seem to be running Flowframes out of an archive.\nPlease extract the whole archive first!", "Error");
-                IOUtils.TryDeleteIfExists(Paths.GetDataPath());
-                Application.Exit();
-            }
-
-            Text = $"Flowframes {Updater.GetInstalledVer()}";
+            StartupChecks.CheckOs();
 
             // Main Tab
             UIUtils.InitCombox(interpFactorCombox, 0);
             UIUtils.InitCombox(outModeCombox, 0);
             UIUtils.InitCombox(aiModel, 2);
             // Video Utils
-            UIUtils.InitCombox(utilsLoopTimesCombox, 0);
-            UIUtils.InitCombox(utilsSpeedCombox, 0);
-            UIUtils.InitCombox(utilsConvCrf, 0);
+            UIUtils.InitCombox(trimCombox, 0);
 
             Program.mainForm = this;
             Logger.textbox = logBox;
-
+            NvApi.Init();
             InitAis();
-            InterpolateUtils.preview = previewPicturebox;
-
+            InterpolationProgress.preview = previewPicturebox;
             UpdateStepByStepControls();
-
             Initialized();
-            Checks();
-
             HandleArguments();
+            Text = $"Flowframes";
         }
 
-        void Checks()
+        private async void Form1_Shown(object sender, EventArgs e)
+        {
+            if (Debugger.IsAttached)
+            {
+                Logger.Log("Debugger is attached - Flowframes seems to be running within VS.");
+                scnDetectTestBtn.Visible = true;
+            }
+
+            await Checks();
+        }
+
+        async Task Checks()
         {
             try
             {
-                GetWebInfo.LoadNews(newsLabel);
-                GetWebInfo.LoadPatronListCsv(patronsLabel);
-                Updater.AsyncUpdateCheck();
-                Python.CheckCompression();
+                await Task.Delay(100);
+                await StartupChecks.SymlinksCheck();
+                await Updater.UpdateModelList();    // Update AI model list
+                await Updater.AsyncUpdateCheck();   // Check for Flowframes updates
+                await GetWebInfo.LoadNews(newsLabel);   // Loads news/MOTD
+                await GetWebInfo.LoadPatronListCsv(patronsLabel);   // Load patron list
+                await Python.CheckCompression();
             }
             catch (Exception e)
             {
@@ -105,6 +105,7 @@ namespace Flowframes
         }
 
         public HTTabControl GetMainTabControl() { return mainTabControl; }
+        public TextBox GetInputFpsTextbox () { return fpsInTbox; }
 
         public bool IsInFocus() { return (ActiveForm == this); }
 
@@ -122,7 +123,7 @@ namespace Flowframes
         public InterpSettings GetCurrentSettings()
         {
             SetTab("interpolate");
-            return new InterpSettings(inputTbox.Text.Trim(), outputTbox.Text.Trim(), GetAi(), fpsInTbox.GetFloat(), interpFactorCombox.GetInt(), GetOutMode(), GetModel());
+            return new InterpSettings(inputTbox.Text.Trim(), outputTbox.Text.Trim(), GetAi(), currInFpsDetected, currInFps, interpFactorCombox.GetInt(), GetOutMode(), GetModel());
         }
 
         public void LoadBatchEntry(InterpSettings entry)
@@ -140,6 +141,11 @@ namespace Flowframes
             statusLabel.Text = str;
         }
 
+        public string GetStatus ()
+        {
+            return statusLabel.Text;
+        }
+
         public void SetProgress(int percent)
         {
             percent = percent.Clamp(0, 100);
@@ -149,24 +155,29 @@ namespace Flowframes
         }
 
         public Size currInRes;
-        public float currInFps;
+        public Fraction currInFpsDetected;
+        public Fraction currInFps;
         public int currInFrames;
         public long currInDuration;
+        public long currInDurationCut;
+
         public void UpdateInputInfo ()
         {
-            string str = $"Resolution: {(!currInRes.IsEmpty ? $"{currInRes.Width}x{currInRes.Height}" : "Unknown")} - ";
-            str += $"Framerate: {(currInFps > 0f ? $"{currInFps.ToStringDot()} FPS" : "Unknown")} - ";
-            str += $"Frame Count: {(currInFrames > 0 ? $"{currInFrames}" : "Unknown")} - ";
-            str += $"Duration: {(currInDuration > 0 ? $"{FormatUtils.MsToTimestamp(currInDuration)}" : "Unknown")}";
+            string str = $"Size: {(!currInRes.IsEmpty ? $"{currInRes.Width}x{currInRes.Height}" : "Unknown")} - ";
+            str += $"Rate: {(currInFpsDetected.GetFloat() > 0f ? $"{currInFpsDetected} ({currInFpsDetected.GetFloat()})" : "Unknown")} - ";
+            str += $"Frames: {(currInFrames > 0 ? $"{currInFrames}" : "Unknown")} - ";
+            str += $"Duration: {(currInDuration > 0 ? FormatUtils.MsToTimestamp(currInDuration) : "Unknown")}";
             inputInfo.Text = str;
         }
 
         public void ResetInputInfo ()
         {
             currInRes = new Size();
-            currInFps = 0;
+            currInFpsDetected = new Fraction();
+            currInFps = new Fraction();
             currInFrames = 0;
             currInDuration = 0;
+            currInDurationCut = 0;
             UpdateInputInfo();
         }
 
@@ -185,27 +196,24 @@ namespace Flowframes
 
         private void browseInputBtn_Click(object sender, EventArgs e)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = inputTbox.Text.Trim();
-            dialog.IsFolderPicker = true;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog { InitialDirectory = inputTbox.Text.Trim(), IsFolderPicker = true };
+
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 DragDropHandler(new string[] { dialog.FileName });
         }
 
         private void browseInputFileBtn_Click(object sender, EventArgs e)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = inputTbox.Text.Trim();
-            dialog.IsFolderPicker = false;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog { InitialDirectory = inputTbox.Text.Trim(), IsFolderPicker = false };
+
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 DragDropHandler(new string[] { dialog.FileName });
         }
 
         private void browseOutBtn_Click(object sender, EventArgs e)
         {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.InitialDirectory = inputTbox.Text.Trim();
-            dialog.IsFolderPicker = true;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog { InitialDirectory = inputTbox.Text.Trim(), IsFolderPicker = true };
+
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 outputTbox.Text = dialog.FileName;
         }
@@ -274,19 +282,33 @@ namespace Flowframes
 
         private void fpsInTbox_TextChanged(object sender, EventArgs e)
         {
-            fpsInTbox.Text = fpsInTbox.Text.TrimNumbers(true);
-            UpdateOutputFPS();
+            UpdateUiFps();
         }
 
-        public void UpdateOutputFPS()
+        public void UpdateUiFps()
         {
-            float fpsOut = fpsInTbox.GetFloat() * interpFactorCombox.GetFloat();
-            fpsOutTbox.Text = fpsOut.ToString();
+            if (fpsInTbox.Text.Contains("/"))   // Parse fraction
+            {
+                string[] split = fpsInTbox.Text.Split('/');
+                Fraction frac = new Fraction(split[0].GetInt(), split[1].GetInt());
+                fpsOutTbox.Text = (frac * interpFactorCombox.GetFloat()).ToString();
+
+                if (!fpsInTbox.ReadOnly)
+                    currInFps = frac;
+            }
+            else    // Parse float
+            {
+                fpsInTbox.Text = fpsInTbox.Text.TrimNumbers(true);
+                fpsOutTbox.Text = (fpsInTbox.GetFloat() * interpFactorCombox.GetFloat()).ToString();
+
+                if (!fpsInTbox.ReadOnly)
+                    currInFps = new Fraction(fpsInTbox.GetFloat());
+            }
         }
 
         private void interpFactorCombox_SelectedIndexChanged(object sender, EventArgs e)
         {
-            UpdateOutputFPS();
+            UpdateUiFps();
             int guiInterpFactor = interpFactorCombox.GetInt();
             if (!initialized)
                 return;
@@ -317,10 +339,17 @@ namespace Flowframes
         {
             if (string.IsNullOrWhiteSpace(aiCombox.Text) || aiCombox.Text == lastAiComboxStr) return;
             lastAiComboxStr = aiCombox.Text;
-            aiModel = UIUtils.FillAiModelsCombox(aiModel, GetAi());
+            UpdateAiModelCombox();
+            
             if(initialized)
                 ConfigParser.SaveComboxIndex(aiCombox);
+
             interpFactorCombox_SelectedIndexChanged(null, null);
+        }
+
+        public void UpdateAiModelCombox ()
+        {
+            aiModel = UIUtils.FillAiModelsCombox(aiModel, GetAi());
         }
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
@@ -328,24 +357,9 @@ namespace Flowframes
             Logger.Log("Closing main form.", true);
         }
 
-        private async void debugExtractFramesBtn_Click(object sender, EventArgs e)
-        {
-            await UtilsTab.ExtractVideo(inputTbox.Text.Trim(), utilsExtractAudioCbox.Checked);
-        }
-
         private void licenseBtn_Click(object sender, EventArgs e)
         {
-            Process.Start("explorer.exe", Path.Combine(Paths.GetPkgPath(), Path.GetFileNameWithoutExtension(Packages.licenses.fileName)));
-        }
-
-        private async void utilsLoopVidBtn_Click(object sender, EventArgs e)
-        {
-            await UtilsTab.LoopVideo(inputTbox.Text.Trim(), utilsLoopTimesCombox);
-        }
-
-        private async void utilsChangeSpeedBtn_Click(object sender, EventArgs e)
-        {
-            await UtilsTab.ChangeSpeed(inputTbox.Text.Trim(), utilsSpeedCombox);
+            Process.Start("explorer.exe", Path.Combine(Paths.GetPkgPath(), Paths.licensesDir));
         }
 
         private void Form1_DragEnter(object sender, DragEventArgs e) { e.Effect = DragDropEffects.Copy; }
@@ -377,23 +391,10 @@ namespace Flowframes
                 if (resume)
                     ResumeUtils.LoadTempFolder(files[0]);
 
+                trimCombox.SelectedIndex = 0;
+
                 MainUiFunctions.InitInput(outputTbox, inputTbox, fpsInTbox);
             }
-        }
-
-        private async void utilsConvertMp4Btn_Click(object sender, EventArgs e)
-        {
-            await UtilsTab.Convert(inputTbox.Text.Trim(), utilsConvCrf);
-        }
-
-        private void utilsDedupBtn_Click(object sender, EventArgs e)
-        {
-            UtilsTab.Dedupe(inputTbox.Text.Trim(), false);
-        }
-
-        private void utilsDedupTestBtn_Click(object sender, EventArgs e)
-        {
-            UtilsTab.Dedupe(inputTbox.Text.Trim(), true);
         }
 
         private void cancelBtn_Click(object sender, EventArgs e)
@@ -437,11 +438,11 @@ namespace Flowframes
 
         private void previewPicturebox_MouseClick(object sender, MouseEventArgs e)
         {
-            if (InterpolateUtils.bigPreviewForm == null)
+            if (InterpolationProgress.bigPreviewForm == null)
             {
-                InterpolateUtils.bigPreviewForm = new BigPreviewForm();
-                InterpolateUtils.bigPreviewForm.Show();
-                InterpolateUtils.bigPreviewForm.SetImage(previewPicturebox.Image);
+                InterpolationProgress.bigPreviewForm = new BigPreviewForm();
+                InterpolationProgress.bigPreviewForm.Show();
+                InterpolationProgress.bigPreviewForm.SetImage(previewPicturebox.Image);
             }
         }
 
@@ -474,6 +475,80 @@ namespace Flowframes
         {
             if (!initialized) return;
             aiCombox_SelectedIndexChanged(null, null);
+        }
+
+        private void trimCombox_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            QuickSettingsTab.trimEnabled = trimCombox.SelectedIndex > 0;
+            trimPanel.Visible = QuickSettingsTab.trimEnabled;
+
+            if (trimCombox.SelectedIndex == 1)
+            {
+                trimStartBox.Text = "00:00:00";
+                trimEndBox.Text = FormatUtils.MsToTimestamp(currInDuration);
+            }
+        }
+
+        private void trimResetBtn_Click(object sender, EventArgs e)
+        {
+            trimCombox_SelectedIndexChanged(null, null);
+        }
+
+        private void trimBox_TextChanged(object sender, EventArgs e)
+        {
+            QuickSettingsTab.UpdateTrim(trimStartBox, trimEndBox);
+        }
+
+        #region Quick Settings
+
+        public void SaveQuickSettings (object sender, EventArgs e)
+        {
+            if (!quickSettingsInitialized) return;
+
+            if (Program.busy)
+                LoadQuickSettings();    // Discard any changes if busy
+
+            ConfigParser.SaveGuiElement(maxVidHeight, ConfigParser.StringMode.Int);
+            ConfigParser.SaveComboxIndex(dedupMode);
+            ConfigParser.SaveComboxIndex(mpdecimateMode);
+            ConfigParser.SaveGuiElement(dedupThresh);
+            ConfigParser.SaveGuiElement(enableLoop);
+            ConfigParser.SaveGuiElement(scnDetect);
+            ConfigParser.SaveGuiElement(scnDetectValue);
+        }
+
+        public void LoadQuickSettings (object sender = null, EventArgs e = null)
+        {
+            ConfigParser.LoadGuiElement(maxVidHeight);
+            ConfigParser.LoadComboxIndex(dedupMode);
+            ConfigParser.LoadComboxIndex(mpdecimateMode);
+            ConfigParser.LoadGuiElement(dedupThresh);
+            ConfigParser.LoadGuiElement(enableLoop);
+            ConfigParser.LoadGuiElement(scnDetect);
+            ConfigParser.LoadGuiElement(scnDetectValue);
+
+            quickSettingsInitialized = true;
+        }
+
+        private void dedupMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            dedupeSensLabel.Visible = dedupMode.SelectedIndex != 0;
+            magickDedupePanel.Visible = dedupMode.SelectedIndex == 1;
+            mpDedupePanel.Visible = dedupMode.SelectedIndex == 2;
+            SaveQuickSettings(null, null);
+        }
+
+        private void linkLabel1_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
+        {
+            if (Program.busy) return;
+            new SettingsForm().ShowDialog();
+        }
+
+        #endregion
+
+        private void scnDetectTestBtn_Click(object sender, EventArgs e)
+        {
+            Magick.SceneDetect.RunSceneDetection(inputTbox.Text.Trim());
         }
     }
 }

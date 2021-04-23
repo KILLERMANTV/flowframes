@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Flowframes.Data;
 
 namespace Flowframes.UI
 {
@@ -21,7 +22,6 @@ namespace Flowframes.UI
             Program.mainForm.SetTab("interpolate");
             Program.mainForm.ResetInputInfo();
             string path = inputTbox.Text.Trim();
-            InterpolateUtils.PathAsciiCheck(path, "input path");
 
             if (Config.GetBool("clearLogOnInput"))
                 Logger.ClearLogBox();
@@ -35,16 +35,18 @@ namespace Flowframes.UI
 
             Logger.Log("Loading metadata...");
             Program.mainForm.currInDuration = FfmpegCommands.GetDuration(path);
-            int frameCount = await InterpolateUtils.GetInputFrameCountAsync(path);
+            Program.mainForm.currInDurationCut = Program.mainForm.currInDuration;
+            int frameCount = await GetFrameCountCached.GetFrameCountAsync(path);
             string fpsStr = "Not Found";
-            float fps = await IOUtils.GetFpsFolderOrVideo(path);
-            fpsInTbox.Text = fps.ToString();
+            Fraction fps = (await IOUtils.GetFpsFolderOrVideo(path));
+            Program.mainForm.currInFpsDetected = fps;
+            fpsInTbox.Text = fps.GetString();
 
-            if (fps > 0)
-                fpsStr = fps.ToString();
+            if (fps.GetFloat() > 0)
+                fpsStr = $"{fps} (~{fps.GetFloat()})";
 
             Logger.Log($"Video FPS: {fpsStr} - Total Number Of Frames: {frameCount}", false, true);
-
+            Program.mainForm.GetInputFpsTextbox().ReadOnly = (fps.GetFloat() > 0 && !Config.GetBool("allowCustomInputRate", false));
             Program.mainForm.currInFps = fps;
             Program.mainForm.currInFrames = frameCount;
             Program.mainForm.UpdateInputInfo();
@@ -53,7 +55,7 @@ namespace Flowframes.UI
             await PrintResolution(path);
             Dedupe.ClearCache();
             await Task.Delay(10);
-            InterpolateUtils.SetPreviewImg(await GetThumbnail(path));
+            InterpolationProgress.SetPreviewImg(await GetThumbnail(path));
         }
 
         static void CheckExistingFolder (string inpath, string outpath)
@@ -62,9 +64,9 @@ namespace Flowframes.UI
             string tmpFolder = InterpolateUtils.GetTempFolderLoc(inpath, outpath);
             if (Directory.Exists(tmpFolder))
             {
-                int scnFrmAmount = IOUtils.GetAmountOfFiles(Path.Combine(tmpFolder, Paths.scenesDir), false, "*.png");
+                int scnFrmAmount = IOUtils.GetAmountOfFiles(Path.Combine(tmpFolder, Paths.scenesDir), false, "*" + Interpolate.current.interpExt);  // TODO: Make this work if the frames extension was changed
                 string scnFrames = scnFrmAmount > 0 ? $"{scnFrmAmount} scene frames" : "no scene frames";
-                int srcFrmAmount = IOUtils.GetAmountOfFiles(Path.Combine(tmpFolder, Paths.framesDir), false, "*.png");
+                int srcFrmAmount = IOUtils.GetAmountOfFiles(Path.Combine(tmpFolder, Paths.framesDir), false, "*" + Interpolate.current.interpExt);
                 string srcFrames = srcFrmAmount > 1 ? $"{srcFrmAmount} source frames" : "no source frames";
                 int interpFrmAmount = IOUtils.GetAmountOfFiles(Path.Combine(tmpFolder, Paths.interpDir), false);
                 string interpFrames = interpFrmAmount > 2 ? $"{interpFrmAmount} interpolated frames" : "no interpolated frames";
@@ -86,7 +88,7 @@ namespace Flowframes.UI
             if(path == Interpolate.current.inPath)
                 res = await Interpolate.current.GetInputRes();
             else
-                res = await IOUtils.GetVideoOrFramesRes(path);
+                res = await GetMediaResolutionCached.GetSizeAsync(path);
 
             if (res.Width > 1 && res.Height > 1)
                 Logger.Log($"Input Resolution: {res.Width}x{res.Height}");

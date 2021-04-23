@@ -2,53 +2,61 @@
 using NvAPIWrapper.GPU;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace Flowframes.OS
 {
     class NvApi
     {
-        static PhysicalGPU gpu;
+        public enum Architecture { Undetected, Fermi, Kepler, Maxwell, Pascal, Turing, Ampere };
+        public static List<PhysicalGPU> gpuList = new List<PhysicalGPU>();
 
-        public static async void Init()
+        public static void Init()
         {
             try
             {
                 NVIDIA.Initialize();
                 PhysicalGPU[] gpus = PhysicalGPU.GetPhysicalGPUs();
+
                 if (gpus.Length == 0)
                     return;
-                gpu = gpus[0];
 
-                Logger.Log($"Initialized NvApi. GPU: {gpu.FullName} - Tensor Cores: {HasTensorCores()}");
+                gpuList = gpus.ToList();
+
+                List<string> gpuNames = new List<string>();
+
+                foreach (PhysicalGPU gpu in gpus)
+                    gpuNames.Add(gpu.FullName);
+
+                string gpuNamesList = string.Join(", ", gpuNames);
+
+                Logger.Log($"Initialized Nvidia API. GPU{(gpus.Length > 1 ? "s" : "")}: {gpuNamesList}");
             }
             catch (Exception e)
             {
-                Logger.Log($"Failed to initialize NvApi: {e.Message}\nIgnore this if you don't have an Nvidia GPU.");
+                Logger.Log("No Nvidia GPU(s) detected. You will not be able to use CUDA implementations on GPU.");
+                Logger.Log($"Failed to initialize NvApi: {e.Message}\nIgnore this if you don't have an Nvidia GPU.", true);
             }
         }
 
-        public static float GetVramGb ()
+        public static float GetVramGb (int gpu = 0)
         {
             try
             {
-                return (gpu.MemoryInformation.AvailableDedicatedVideoMemoryInkB / 1000f / 1024f);
+                return (gpuList[gpu].MemoryInformation.AvailableDedicatedVideoMemoryInkB / 1000f / 1024f);
             }
-            catch (Exception e)
+            catch
             {
                 return 0f;
             }
         }
 
-        public static float GetFreeVramGb()
+        public static float GetFreeVramGb(int gpu = 0)
         {
             try
             {
-                return (gpu.MemoryInformation.CurrentAvailableDedicatedVideoMemoryInkB / 1000f / 1024f);
+                return (gpuList[gpu].MemoryInformation.CurrentAvailableDedicatedVideoMemoryInkB / 1000f / 1024f);
             }
             catch
             {
@@ -73,17 +81,51 @@ namespace Flowframes.OS
             }
         }
 
-        public static bool HasTensorCores ()
+        public static bool HasAmpereOrNewer()
         {
-            if (gpu == null)
-                Init();
+            foreach (PhysicalGPU gpu in gpuList)
+            {
+                Architecture arch = GetArch(gpu);
 
-            if (gpu == null)
+                if (arch == Architecture.Ampere || arch == Architecture.Undetected)
+                    return true;
+            }
+
+            return false;
+        }
+
+        public static Architecture GetArch(PhysicalGPU gpu)
+        {
+            string gpuCode = gpu.ArchitectInformation.ShortName;
+
+            if (gpuCode.Trim().StartsWith("GF")) return Architecture.Fermi;
+            if (gpuCode.Trim().StartsWith("GK")) return Architecture.Kepler;
+            if (gpuCode.Trim().StartsWith("GM")) return Architecture.Maxwell;
+            if (gpuCode.Trim().StartsWith("GP")) return Architecture.Pascal;
+            if (gpuCode.Trim().StartsWith("TU")) return Architecture.Turing;
+            if (gpuCode.Trim().StartsWith("GA")) return Architecture.Ampere;
+
+            return Architecture.Undetected;
+        }
+
+        public static bool HasTensorCores (int gpu = 0)
+        {
+            try
+            {
+                if (gpuList == null)
+                    Init();
+
+                if (gpuList == null)
+                    return false;
+
+                Architecture arch = GetArch(gpuList[gpu]);
+                return arch == Architecture.Turing || arch == Architecture.Ampere;
+            }
+            catch (Exception e)
+            {
+                Logger.Log($"HasTensorCores({gpu}) Error: {e.Message}", true);
                 return false;
-
-            string gpuName = gpu.FullName;
-
-            return (gpuName.Contains("RTX 20") || gpuName.Contains("RTX 30") || gpuName.Contains("Tesla V") || gpuName.Contains("Tesla T"));
+            }
         }
     }
 }

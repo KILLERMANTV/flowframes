@@ -66,12 +66,14 @@ namespace Flowframes.Media
 
             if (codec == Codec.NVENC264)
             {
-                args += $"-cq {Config.GetInt("h264Crf")} -preset slow -pix_fmt yuv420p";
+                int crf = Config.GetInt("h264Crf");
+                args += $"-b:v 0 {(crf > 0 ? $"-qp {crf} -preset slow" : "-preset lossless")} -pix_fmt yuv420p";
             }
 
             if (codec == Codec.NVENC265)
             {
-                args += $"-cq {Config.GetInt("h265Crf")} -preset slow -pix_fmt yuv420p";
+                int crf = Config.GetInt("h264Crf");
+                args += $"-b:v 0 {(crf > 0 ? $"-qp {crf} -preset slow" : "-preset lossless")} -pix_fmt yuv420p";
             }
 
             if (codec == Codec.VP9)
@@ -95,13 +97,42 @@ namespace Flowframes.Media
             return args;
         }
 
-        public static string GetAudioEnc(Codec codec)
+        public static bool ContainerSupportsAllAudioFormats (Interpolate.OutMode outMode, List<string> codecs)
         {
-            switch (codec)
+            if(codecs.Count < 1)
+                Logger.Log($"Warning: ContainerSupportsAllAudioFormats() was called, but codec list has {codecs.Count} entries.", true, false, "ffmpeg");
+
+            foreach (string format in codecs)
             {
-                case Codec.VP9: return "libopus";
+                if (!ContainerSupportsAudioFormat(outMode, format))
+                    return false;
             }
-            return "aac";
+
+            return true;
+        }
+
+        public static bool ContainerSupportsAudioFormat (Interpolate.OutMode outMode, string format)
+        {
+            bool supported = false;
+            string alias = GetAudioExt(format);
+
+            string[] formatsMp4 = new string[] { "m4a", "ac3", "dts" };
+            string[] formatsMkv = new string[] { "m4a", "ac3", "dts", "ogg", "mp2", "mp3", "wav", "wma" };
+            string[] formatsWebm = new string[] { "ogg" };
+            string[] formatsProres = new string[] { "m4a", "ac3", "dts", "wav" };
+            string[] formatsAvi = new string[] { "m4a", "ac3", "dts" };
+
+            switch (outMode)
+            {
+                case Interpolate.OutMode.VidMp4: supported = formatsMp4.Contains(alias); break;
+                case Interpolate.OutMode.VidMkv: supported = formatsMkv.Contains(alias); break;
+                case Interpolate.OutMode.VidWebm: supported = formatsWebm.Contains(alias); break;
+                case Interpolate.OutMode.VidProRes: supported = formatsProres.Contains(alias); break;
+                case Interpolate.OutMode.VidAvi: supported = formatsAvi.Contains(alias); break;
+            }
+
+            Logger.Log($"Checking if {outMode} supports audio format '{format}' ({alias}): {supported}", true, false, "ffmpeg");
+            return supported;
         }
 
         public static string GetExt(Interpolate.OutMode outMode, bool dot = true)
@@ -121,25 +152,41 @@ namespace Flowframes.Media
             return ext;
         }
 
-        public static string GetAudioExt(string videoFile)
+        public static string GetAudioExt(string videoFile, int streamIndex = -1)
         {
-            switch (FfmpegCommands.GetAudioCodec(videoFile))
+            return GetAudioExt(FfmpegCommands.GetAudioCodec(videoFile, streamIndex));
+        }
+
+        public static string GetAudioExt (string codec)
+        {
+            if (codec.StartsWith("pcm_"))
+                return "wav";
+
+            switch (codec)
             {
                 case "vorbis": return "ogg";
                 case "opus": return "ogg";
                 case "mp2": return "mp2";
+                case "mp3": return "mp3";
                 case "aac": return "m4a";
-                default: return "wav";
+                case "ac3": return "ac3";
+                case "eac3": return "ac3";
+                case "dts": return "dts";
+                case "alac": return "wav";
+                case "flac": return "wav";
+                case "wmav1": return "wma";
+                case "wmav2": return "wma";
             }
+
+            return "unsupported";
         }
 
-        public static string GetAudioFallbackArgs (string containerExt)
+        public static string GetAudioFallbackArgs (Interpolate.OutMode outMode)
         {
-            containerExt = containerExt.Remove(".");
             string codec = "aac";
             string bitrate = $"{Config.GetInt("aacBitrate", 160)}";
 
-            if(containerExt == "webm" || containerExt == "mkv")
+            if(outMode == Interpolate.OutMode.VidMkv || outMode == Interpolate.OutMode.VidWebm)
             {
                 codec = "libopus";
                 bitrate = $"{Config.GetInt("opusBitrate", 128)}";
@@ -174,8 +221,10 @@ namespace Flowframes.Media
             containerExt = containerExt.Remove(".");
             bool supported = (containerExt == "mp4" || containerExt == "mkv" || containerExt == "webm" || containerExt == "mov");
             Logger.Log($"Subtitles {(supported ? "are supported" : "not supported")} by {containerExt.ToUpper()}", true);
-            if (Config.GetBool("keepSubs") && !supported)
-                Logger.Log($"Warning: Subtitles are enabled, but {containerExt.ToUpper()} does not support them. MKV is recommended instead.");
+
+            if (showWarningIfNotSupported && Config.GetBool("keepSubs") && !supported)
+                Logger.Log($"Warning: Subtitle transfer is enabled, but {containerExt.ToUpper()} does not support subtitles properly. MKV is recommended instead.");
+           
             return supported;
         }
     }

@@ -1,4 +1,5 @@
 import sys
+import io
 import os
 import cv2
 import torch
@@ -10,6 +11,7 @@ import _thread
 import skvideo.io
 from queue import Queue, Empty
 import shutil
+import base64
 warnings.filterwarnings("ignore")
 
 abspath = os.path.abspath(__file__)
@@ -29,6 +31,7 @@ parser.add_argument('--rbuffer', dest='rbuffer', type=int, default=200)
 parser.add_argument('--wthreads', dest='wthreads', type=int, default=4)
 parser.add_argument('--fp16', dest='fp16', action='store_true', help='half-precision mode')
 parser.add_argument('--UHD', dest='UHD', action='store_true', help='support 4k video')
+parser.add_argument('--scale', dest='scale', type=float, default=1.0, help='Try scale=0.5 for 4k video')
 parser.add_argument('--exp', dest='exp', type=int, default=1)
 args = parser.parse_args()
 assert (not args.input is None)
@@ -40,7 +43,7 @@ if torch.cuda.is_available():
     torch.backends.cudnn.enabled = True
     torch.backends.cudnn.benchmark = True
     if(args.fp16):
-        torch.set_default_tensor_type(torch.HalfTensor)
+        torch.set_default_tensor_type(torch.cuda.HalfTensor)
         print("RIFE is running in FP16 mode.")
 else:
     print("WARNING: CUDA is not available, RIFE is running on CPU! [ff:nocuda-cpu]")
@@ -66,7 +69,7 @@ model.device()
 path = args.input
 name = os.path.basename(path)
 interp_output_path = (args.output).join(path.rsplit(name, 1))
-print("\ninterp_output_path: " + interp_output_path)
+print("interp_output_path: " + interp_output_path)
 
 cnt = 1
 
@@ -76,7 +79,8 @@ for f in os.listdir(args.input):
         videogen.append(f)
 tot_frame = len(videogen)
 videogen.sort(key= lambda x:int(x[:-4]))
-lastframe = cv2.imread(os.path.join(args.input, videogen[0]))[:, :, ::-1].copy()
+img_path = os.path.join(args.input, videogen[0])
+lastframe = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)[:, :, ::-1].copy()
 videogen = videogen[1:]    
 h, w, _ = lastframe.shape
 vid_out = None
@@ -85,6 +89,7 @@ if not os.path.exists(interp_output_path):
     
 
 def clear_write_buffer(user_args, write_buffer, thread_id):
+    os.chdir(interp_output_path)
     while True:
         item = write_buffer.get()
         if item is None:
@@ -92,13 +97,15 @@ def clear_write_buffer(user_args, write_buffer, thread_id):
         frameNum = item[0]
         img = item[1]
         print('[T{}] => {:0>8d}.{}'.format(thread_id, frameNum, args.imgformat))
-        cv2.imwrite('{}/{:0>8d}.{}'.format(interp_output_path, frameNum, args.imgformat), img[:, :, ::-1], [cv2.IMWRITE_PNG_COMPRESSION, 2])
+        #imgBytes = base64.b64encode(cv2.imencode(f'.{args.imgformat}', img[:, :, ::-1], [cv2.IMWRITE_PNG_COMPRESSION, 2])[1].tostring())
+        #print(f"{frameNum:08}:"+ imgBytes.decode('utf-8') + "\n\n\n\n")
+        cv2.imwrite('{:0>8d}.{}'.format(frameNum, args.imgformat), img[:, :, ::-1], [cv2.IMWRITE_PNG_COMPRESSION, 2])
 
 def build_read_buffer(user_args, read_buffer, videogen):
     for frame in videogen:
         if not user_args.input is None:
-            #print("Loading input frame " + str(frame))
-            frame = cv2.imread(os.path.join(user_args.input, frame))[:, :, ::-1].copy()
+            img_path = os.path.join(user_args.input, frame)
+            frame = cv2.imdecode(np.fromfile(img_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)[:, :, ::-1].copy()
         read_buffer.put(frame)
     read_buffer.put(None)
 
@@ -134,7 +141,7 @@ for x in range(args.wthreads):
     _thread.start_new_thread(clear_write_buffer, (args, write_buffer, x))
 
 I1 = torch.from_numpy(np.transpose(lastframe, (2,0,1))).to(device, non_blocking=True).unsqueeze(0).float() / 255.
-I1 = F.pad(I1, padding).half()
+I1 = pad_image(I1)
 
 while True:
     frame = read_buffer.get()
@@ -159,6 +166,3 @@ import time
 while(not write_buffer.empty()):
     time.sleep(0.2)
 time.sleep(0.5)
-    
-    
-    

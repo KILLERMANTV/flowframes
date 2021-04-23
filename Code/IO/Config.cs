@@ -113,6 +113,12 @@ namespace Flowframes.IO
             return float.Parse(Get(key, Type.Float), CultureInfo.InvariantCulture);
         }
 
+        public static float GetFloat(string key, float defaultVal)
+        {
+            WriteIfDoesntExist(key, defaultVal.ToStringDot());
+            return float.Parse(Get(key, Type.Float), CultureInfo.InvariantCulture);
+        }
+
         public static string GetFloatString (string key)
         {
             return Get(key, Type.Float).Replace(",", ".");
@@ -129,17 +135,22 @@ namespace Flowframes.IO
         public enum Type { String, Int, Float, Bool }
         private static string WriteDefaultValIfExists(string key, Type type)
         {
-            if (key == "maxVidHeight")      return WriteDefault(key, "2160");
-            if (key == "delLogsOnStartup")  return WriteDefault(key, "True");
-            if (key == "clearLogOnInput")   return WriteDefault(key, "True");
-            if (key == "tempDirCustom")     return WriteDefault(key, "C:/");
+            if (key == "maxVidHeight")          return WriteDefault(key, "2160");
+            if (key == "delLogsOnStartup")      return WriteDefault(key, "True");
+            if (key == "clearLogOnInput")       return WriteDefault(key, "True");
+            if (key == "tempDirCustom")         return WriteDefault(key, "D:/");
+            if (key == "exportNamePattern")     return WriteDefault(key, "[NAME]-[FACTOR]x-[AI]-[MODEL]-[FPS]fps");
+            if (key == "exportNamePatternLoop") return WriteDefault(key, "-Loop[LOOPS]");
             // Interpolation
-            if (key == "dedupThresh")       return WriteDefault(key, "2");
-            if (key == "keepAudio")         return WriteDefault(key, "True");
-            if (key == "keepSubs")          return WriteDefault(key, "True");
-            if (key == "autoDedupFrames")   return WriteDefault(key, "100");
-            if (key == "scnDetectValue")    return WriteDefault(key, "0.2");
-            if (key == "autoEncMode")       return WriteDefault(key, "2");
+            if (key == "dedupThresh")           return WriteDefault(key, "2");
+            if (key == "keepAudio")             return WriteDefault(key, "True");
+            if (key == "keepSubs")              return WriteDefault(key, "True");
+            if (key == "keepMeta")              return WriteDefault(key, "True");
+            if (key == "autoDedupFrames")       return WriteDefault(key, "100");
+            if (key == "scnDetectValue")        return WriteDefault(key, "0.2");
+            if (key == "sceneChangeFillMode")   return WriteDefault(key, "1");
+            if (key == "autoEncMode")           return WriteDefault(key, "2");
+            if (key == "jpegFrames")            return WriteDefault(key, "True");
             // Video Export
             if (key == "minOutVidLength")   return WriteDefault(key, "5");
             if (key == "h264Crf")           return WriteDefault(key, "20");
@@ -149,20 +160,22 @@ namespace Flowframes.IO
             if (key == "aviCodec")          return WriteDefault(key, "ffv1");
             if (key == "aviColors")         return WriteDefault(key, "yuv420p");
             if (key == "gifColors")         return WriteDefault(key, "128 (High)");
-            if (key == "minVidLength")      return WriteDefault(key, "2");
+            if (key == "gifDitherType")     return WriteDefault(key, "bayer (Recommended)");
+            if (key == "minVidLength")      return WriteDefault(key, "5");
             // AI
-            if (key == "uhdThresh")         return WriteDefault(key, "1440");
+            if (key == "uhdThresh")         return WriteDefault(key, "1600");
             if (key == "rifeCudaFp16")      return WriteDefault(key, NvApi.HasTensorCores().ToString());
+            if (key == "torchGpus")         return WriteDefault(key, "0");
+            if (key == "ncnnGpus")          return WriteDefault(key, "0");
             if (key == "ncnnThreads")       return WriteDefault(key, "1");
             if (key == "dainNcnnTilesize")  return WriteDefault(key, "768");
             // Debug / Other / Experimental
-            if (key == "modelsBaseUrl")     return WriteDefault(key, "https://dl.nmkd.de/flowframes/mdl/");
-            if (key == "ffEncPreset")       return WriteDefault(key, "medium");
-            if (key == "ffEncArgs")         return WriteDefault(key, "");
+            if (key == "mdlBaseUrl")    return WriteDefault(key, "https://dl.nmkd.de/flowframes/mdl/");
+            if (key == "ffEncPreset")   return WriteDefault(key, "medium");
 
             if (type == Type.Int || type == Type.Float) return WriteDefault(key, "0");     // Write default int/float (0)
             if (type == Type.Bool)                      return WriteDefault(key, "False");     // Write default bool (False)
-            return WriteDefault(key, "0");
+            return WriteDefault(key, "");
         }
 
         private static string WriteDefault(string key, string def)

@@ -2,11 +2,8 @@
 using Flowframes.Forms;
 using Flowframes.IO;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -17,6 +14,13 @@ namespace Flowframes.OS
         public enum VersionCompareResult { Older, Newer, Equal };
         public static string latestVerUrl = "https://dl.nmkd.de/flowframes/exe/ver.ini";
 
+        public static string GetInstalledVerStr()
+        {
+            Version ver = GetInstalledVer();
+            if (ver.Major == 0 && ver.Minor == 0 && ver.Minor == 0) return "";
+            return ver.ToString();
+        }
+
         public static Version GetInstalledVer()
         {
             try
@@ -26,12 +30,13 @@ namespace Flowframes.OS
             }
             catch (Exception e)
             {
-                Logger.Log("Error getting installed version: " + e.Message);
+                Logger.Log("Error getting installed version!");
+                Logger.Log(e.Message, true);
                 return new Version(0, 0, 0);
             }
         }
 
-        public static VersionCompareResult CompareVersions (Version currentVersion, Version newVersion)
+        public static VersionCompareResult CompareVersions(Version currentVersion, Version newVersion)
         {
             Logger.Log($"Checking if {newVersion} > {currentVersion}", true);
             int result = newVersion.CompareTo(currentVersion);
@@ -52,7 +57,7 @@ namespace Flowframes.OS
             return VersionCompareResult.Equal;
         }
 
-        public static Version GetLatestVer (bool patreon)
+        public static Version GetLatestVer(bool patreon)
         {
             var client = new WebClient();
             int line = patreon ? 0 : 2;
@@ -74,7 +79,7 @@ namespace Flowframes.OS
             }
         }
 
-        public static async Task UpdateTo (int version, UpdaterForm form = null)
+        public static async Task UpdateTo(int version, UpdaterForm form = null)
         {
             Logger.Log("Updating to " + version, true);
             string savePath = Path.Combine(Paths.GetExeDir(), $"FlowframesV{version}");
@@ -123,13 +128,54 @@ namespace Flowframes.OS
             Application.Exit();
         }
 
-        public static async Task AsyncUpdateCheck ()
+        public static async Task AsyncUpdateCheck()
         {
             Version installed = GetInstalledVer();
             Version latestPat = GetLatestVer(true);
             Version latestFree = GetLatestVer(false);
 
             Logger.Log($"You are running Flowframes {installed}. The latest Patreon version is {latestPat}, the latest free version is {latestFree}.");
+        }
+
+        public static async Task UpdateModelList()
+        {
+            foreach (AI ai in Networks.networks)
+            {
+                try
+                {
+                    var client = new WebClient();
+                    string aiName = ai.pkgDir;
+                    string url = $"https://raw.githubusercontent.com/n00mkrad/flowframes/main/Pkgs/{aiName}/models.txt";
+                    string movePath = Path.Combine(Paths.GetPkgPath(), aiName, "models.txt");
+                    string savePath = movePath + ".tmp";
+
+                    if (!Directory.Exists(savePath.GetParentDir()))
+                    {
+                        Logger.Log($"Skipping {ai.pkgDir} models file download as '{savePath.GetParentDir()}' does not exist!", true);
+                        continue;
+                    }
+
+                    Logger.Log($"Saving models file from '{url}' to '{savePath}'", true);
+                    client.DownloadFile(url, savePath);
+
+                    if (IOUtils.GetFilesize(savePath) > 8)
+                    {
+                        File.Delete(movePath);
+                        File.Move(savePath, movePath);
+                    }
+                    else
+                    {
+                        File.Delete(savePath);
+                    }
+
+                    Program.mainForm.UpdateAiModelCombox();
+                }
+                catch (Exception e)
+                {
+                    Logger.Log($"Failed to fetch models file for {ai.friendlyName}. Ignore this if you are not connected to the internet.");
+                    Logger.Log($"{e.Message}\n{e.StackTrace}", true);
+                }
+            }
         }
     }
 }

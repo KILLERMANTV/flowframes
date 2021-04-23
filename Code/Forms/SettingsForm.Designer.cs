@@ -32,10 +32,14 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SettingsForm));
             this.settingsTabList = new Cyotek.Windows.Forms.TabList();
             this.generalTab = new Cyotek.Windows.Forms.TabListPage();
+            this.exportNamePatternLoop = new System.Windows.Forms.TextBox();
+            this.label69 = new System.Windows.Forms.Label();
+            this.label68 = new System.Windows.Forms.Label();
+            this.info1 = new System.Windows.Forms.PictureBox();
+            this.exportNamePattern = new System.Windows.Forms.TextBox();
+            this.label67 = new System.Windows.Forms.Label();
             this.clearModelCacheBtn = new HTAlt.WinForms.HTButton();
             this.label64 = new System.Windows.Forms.Label();
-            this.modelSuffix = new System.Windows.Forms.CheckBox();
-            this.label63 = new System.Windows.Forms.Label();
             this.label62 = new System.Windows.Forms.Label();
             this.clearLogOnInput = new System.Windows.Forms.CheckBox();
             this.label61 = new System.Windows.Forms.Label();
@@ -54,6 +58,9 @@
             this.delLogsOnStartup = new System.Windows.Forms.CheckBox();
             this.label11 = new System.Windows.Forms.Label();
             this.tabListPage2 = new Cyotek.Windows.Forms.TabListPage();
+            this.keepMeta = new System.Windows.Forms.CheckBox();
+            this.sceneChangeFillMode = new System.Windows.Forms.ComboBox();
+            this.label71 = new System.Windows.Forms.Label();
             this.label4 = new System.Windows.Forms.Label();
             this.enableAlpha = new System.Windows.Forms.CheckBox();
             this.label25 = new System.Windows.Forms.Label();
@@ -82,6 +89,9 @@
             this.keepAudio = new System.Windows.Forms.CheckBox();
             this.label1 = new System.Windows.Forms.Label();
             this.aiOptsPage = new Cyotek.Windows.Forms.TabListPage();
+            this.label66 = new System.Windows.Forms.Label();
+            this.rifeCudaFp16 = new System.Windows.Forms.CheckBox();
+            this.label65 = new System.Windows.Forms.Label();
             this.label35 = new System.Windows.Forms.Label();
             this.panel12 = new System.Windows.Forms.Panel();
             this.dainNcnnTilesize = new System.Windows.Forms.ComboBox();
@@ -103,6 +113,10 @@
             this.label5 = new System.Windows.Forms.Label();
             this.label32 = new System.Windows.Forms.Label();
             this.vidExportTab = new Cyotek.Windows.Forms.TabListPage();
+            this.gifDitherType = new System.Windows.Forms.ComboBox();
+            this.label73 = new System.Windows.Forms.Label();
+            this.fixOutputDuration = new System.Windows.Forms.CheckBox();
+            this.label72 = new System.Windows.Forms.Label();
             this.minOutVidLength = new System.Windows.Forms.NumericUpDown();
             this.aviColors = new System.Windows.Forms.ComboBox();
             this.aviCodec = new System.Windows.Forms.ComboBox();
@@ -126,7 +140,6 @@
             this.label20 = new System.Windows.Forms.Label();
             this.label21 = new System.Windows.Forms.Label();
             this.label19 = new System.Windows.Forms.Label();
-            this.label18 = new System.Windows.Forms.Label();
             this.gifColors = new System.Windows.Forms.ComboBox();
             this.label17 = new System.Windows.Forms.Label();
             this.label16 = new System.Windows.Forms.Label();
@@ -140,8 +153,11 @@
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.debugTab = new Cyotek.Windows.Forms.TabListPage();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.audioSubTransferMode = new System.Windows.Forms.ComboBox();
+            this.label70 = new System.Windows.Forms.Label();
             this.panel13 = new System.Windows.Forms.Panel();
-            this.modelsBaseUrl = new System.Windows.Forms.ComboBox();
+            this.mdlBaseUrl = new System.Windows.Forms.ComboBox();
             this.label42 = new System.Windows.Forms.Label();
             this.ffEncArgs = new System.Windows.Forms.TextBox();
             this.label56 = new System.Windows.Forms.Label();
@@ -151,9 +167,6 @@
             this.label47 = new System.Windows.Forms.Label();
             this.label46 = new System.Windows.Forms.Label();
             this.label45 = new System.Windows.Forms.Label();
-            this.label41 = new System.Windows.Forms.Label();
-            this.ffprobeCountFrames = new System.Windows.Forms.CheckBox();
-            this.label40 = new System.Windows.Forms.Label();
             this.label38 = new System.Windows.Forms.Label();
             this.ffEncThreads = new System.Windows.Forms.TextBox();
             this.label37 = new System.Windows.Forms.Label();
@@ -164,11 +177,13 @@
             this.cmdDebugMode = new System.Windows.Forms.ComboBox();
             this.titleLabel = new System.Windows.Forms.Label();
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
-            this.label65 = new System.Windows.Forms.Label();
-            this.rifeCudaFp16 = new System.Windows.Forms.CheckBox();
-            this.label66 = new System.Windows.Forms.Label();
+            this.label18 = new System.Windows.Forms.Label();
+            this.jpegFrames = new System.Windows.Forms.CheckBox();
+            this.label63 = new System.Windows.Forms.Label();
+            this.label74 = new System.Windows.Forms.Label();
             this.settingsTabList.SuspendLayout();
             this.generalTab.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.info1)).BeginInit();
             this.tabListPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.scnDetectValue)).BeginInit();
             this.mpDedupePanel.SuspendLayout();
@@ -179,10 +194,14 @@
             this.vidExportTab.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.minOutVidLength)).BeginInit();
             this.debugTab.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // settingsTabList
             // 
+            this.settingsTabList.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
             this.settingsTabList.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
             this.settingsTabList.Controls.Add(this.generalTab);
             this.settingsTabList.Controls.Add(this.tabListPage2);
@@ -198,10 +217,14 @@
             // generalTab
             // 
             this.generalTab.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.generalTab.Controls.Add(this.exportNamePatternLoop);
+            this.generalTab.Controls.Add(this.label69);
+            this.generalTab.Controls.Add(this.label68);
+            this.generalTab.Controls.Add(this.info1);
+            this.generalTab.Controls.Add(this.exportNamePattern);
+            this.generalTab.Controls.Add(this.label67);
             this.generalTab.Controls.Add(this.clearModelCacheBtn);
             this.generalTab.Controls.Add(this.label64);
-            this.generalTab.Controls.Add(this.modelSuffix);
-            this.generalTab.Controls.Add(this.label63);
             this.generalTab.Controls.Add(this.label62);
             this.generalTab.Controls.Add(this.clearLogOnInput);
             this.generalTab.Controls.Add(this.label61);
@@ -221,7 +244,68 @@
             this.generalTab.Controls.Add(this.label11);
             this.generalTab.Name = "generalTab";
             this.generalTab.Size = new System.Drawing.Size(762, 419);
-            this.generalTab.Text = "General";
+            this.generalTab.Text = "Application";
+            // 
+            // exportNamePatternLoop
+            // 
+            this.exportNamePatternLoop.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.exportNamePatternLoop.ForeColor = System.Drawing.Color.White;
+            this.exportNamePatternLoop.Location = new System.Drawing.Point(624, 127);
+            this.exportNamePatternLoop.MinimumSize = new System.Drawing.Size(4, 21);
+            this.exportNamePatternLoop.Name = "exportNamePatternLoop";
+            this.exportNamePatternLoop.Size = new System.Drawing.Size(100, 20);
+            this.exportNamePatternLoop.TabIndex = 85;
+            // 
+            // label69
+            // 
+            this.label69.AutoSize = true;
+            this.label69.Location = new System.Drawing.Point(555, 130);
+            this.label69.Margin = new System.Windows.Forms.Padding(3, 10, 3, 7);
+            this.label69.Name = "label69";
+            this.label69.Size = new System.Drawing.Size(63, 13);
+            this.label69.TabIndex = 84;
+            this.label69.Text = "Loop Suffix:";
+            // 
+            // label68
+            // 
+            this.label68.AutoSize = true;
+            this.label68.Location = new System.Drawing.Point(277, 130);
+            this.label68.Margin = new System.Windows.Forms.Padding(10, 10, 3, 7);
+            this.label68.Name = "label68";
+            this.label68.Size = new System.Drawing.Size(34, 13);
+            this.label68.TabIndex = 83;
+            this.label68.Text = "Base:";
+            // 
+            // info1
+            // 
+            this.info1.BackgroundImage = global::Flowframes.Properties.Resources.questmark_72px_bordeer;
+            this.info1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.info1.Location = new System.Drawing.Point(730, 127);
+            this.info1.Name = "info1";
+            this.info1.Size = new System.Drawing.Size(29, 21);
+            this.info1.TabIndex = 82;
+            this.info1.TabStop = false;
+            this.toolTip1.SetToolTip(this.info1, resources.GetString("info1.ToolTip"));
+            // 
+            // exportNamePattern
+            // 
+            this.exportNamePattern.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.exportNamePattern.ForeColor = System.Drawing.Color.White;
+            this.exportNamePattern.Location = new System.Drawing.Point(317, 127);
+            this.exportNamePattern.MinimumSize = new System.Drawing.Size(4, 21);
+            this.exportNamePattern.Name = "exportNamePattern";
+            this.exportNamePattern.Size = new System.Drawing.Size(232, 20);
+            this.exportNamePattern.TabIndex = 81;
+            // 
+            // label67
+            // 
+            this.label67.AutoSize = true;
+            this.label67.Location = new System.Drawing.Point(10, 130);
+            this.label67.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label67.Name = "label67";
+            this.label67.Size = new System.Drawing.Size(105, 13);
+            this.label67.TabIndex = 80;
+            this.label67.Text = "Export Name Pattern";
             // 
             // clearModelCacheBtn
             // 
@@ -247,30 +331,11 @@
             this.label64.TabIndex = 78;
             this.label64.Text = "Delete Downloaded Model Files";
             // 
-            // modelSuffix
-            // 
-            this.modelSuffix.AutoSize = true;
-            this.modelSuffix.Location = new System.Drawing.Point(280, 191);
-            this.modelSuffix.Name = "modelSuffix";
-            this.modelSuffix.Size = new System.Drawing.Size(15, 14);
-            this.modelSuffix.TabIndex = 77;
-            this.modelSuffix.UseVisualStyleBackColor = true;
-            // 
-            // label63
-            // 
-            this.label63.AutoSize = true;
-            this.label63.Location = new System.Drawing.Point(10, 191);
-            this.label63.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label63.Name = "label63";
-            this.label63.Size = new System.Drawing.Size(210, 13);
-            this.label63.TabIndex = 76;
-            this.label63.Text = "Include AI Model Name In Output Filename";
-            // 
             // label62
             // 
             this.label62.AutoSize = true;
             this.label62.ForeColor = System.Drawing.Color.Silver;
-            this.label62.Location = new System.Drawing.Point(308, 161);
+            this.label62.Location = new System.Drawing.Point(308, 191);
             this.label62.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label62.Name = "label62";
             this.label62.Size = new System.Drawing.Size(249, 13);
@@ -280,7 +345,7 @@
             // clearLogOnInput
             // 
             this.clearLogOnInput.AutoSize = true;
-            this.clearLogOnInput.Location = new System.Drawing.Point(280, 161);
+            this.clearLogOnInput.Location = new System.Drawing.Point(280, 191);
             this.clearLogOnInput.Name = "clearLogOnInput";
             this.clearLogOnInput.Size = new System.Drawing.Size(15, 14);
             this.clearLogOnInput.TabIndex = 74;
@@ -289,7 +354,7 @@
             // label61
             // 
             this.label61.AutoSize = true;
-            this.label61.Location = new System.Drawing.Point(10, 161);
+            this.label61.Location = new System.Drawing.Point(10, 191);
             this.label61.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label61.Name = "label61";
             this.label61.Size = new System.Drawing.Size(181, 13);
@@ -446,7 +511,7 @@
             // delLogsOnStartup
             // 
             this.delLogsOnStartup.AutoSize = true;
-            this.delLogsOnStartup.Location = new System.Drawing.Point(280, 130);
+            this.delLogsOnStartup.Location = new System.Drawing.Point(280, 160);
             this.delLogsOnStartup.Name = "delLogsOnStartup";
             this.delLogsOnStartup.Size = new System.Drawing.Size(15, 14);
             this.delLogsOnStartup.TabIndex = 23;
@@ -455,7 +520,7 @@
             // label11
             // 
             this.label11.AutoSize = true;
-            this.label11.Location = new System.Drawing.Point(10, 130);
+            this.label11.Location = new System.Drawing.Point(10, 160);
             this.label11.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label11.Name = "label11";
             this.label11.Size = new System.Drawing.Size(216, 13);
@@ -465,6 +530,13 @@
             // tabListPage2
             // 
             this.tabListPage2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.tabListPage2.Controls.Add(this.label74);
+            this.tabListPage2.Controls.Add(this.jpegFrames);
+            this.tabListPage2.Controls.Add(this.label63);
+            this.tabListPage2.Controls.Add(this.label18);
+            this.tabListPage2.Controls.Add(this.keepMeta);
+            this.tabListPage2.Controls.Add(this.sceneChangeFillMode);
+            this.tabListPage2.Controls.Add(this.label71);
             this.tabListPage2.Controls.Add(this.label4);
             this.tabListPage2.Controls.Add(this.enableAlpha);
             this.tabListPage2.Controls.Add(this.label25);
@@ -492,6 +564,41 @@
             this.tabListPage2.Name = "tabListPage2";
             this.tabListPage2.Size = new System.Drawing.Size(762, 419);
             this.tabListPage2.Text = "Interpolation";
+            // 
+            // keepMeta
+            // 
+            this.keepMeta.AutoSize = true;
+            this.keepMeta.Location = new System.Drawing.Point(467, 39);
+            this.keepMeta.Name = "keepMeta";
+            this.keepMeta.Size = new System.Drawing.Size(131, 17);
+            this.keepMeta.TabIndex = 81;
+            this.keepMeta.Text = "Keep Metadata (MKV)";
+            this.keepMeta.UseVisualStyleBackColor = true;
+            // 
+            // sceneChangeFillMode
+            // 
+            this.sceneChangeFillMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.sceneChangeFillMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.sceneChangeFillMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.sceneChangeFillMode.ForeColor = System.Drawing.Color.White;
+            this.sceneChangeFillMode.FormattingEnabled = true;
+            this.sceneChangeFillMode.Items.AddRange(new object[] {
+            "Basic (Duplicate Previous Frame)",
+            "Fancy (Blend To Next Scene)"});
+            this.sceneChangeFillMode.Location = new System.Drawing.Point(280, 267);
+            this.sceneChangeFillMode.Name = "sceneChangeFillMode";
+            this.sceneChangeFillMode.Size = new System.Drawing.Size(250, 21);
+            this.sceneChangeFillMode.TabIndex = 80;
+            // 
+            // label71
+            // 
+            this.label71.AutoSize = true;
+            this.label71.Location = new System.Drawing.Point(10, 270);
+            this.label71.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label71.Name = "label71";
+            this.label71.Size = new System.Drawing.Size(124, 13);
+            this.label71.TabIndex = 79;
+            this.label71.Text = "Scene Change Fix Mode";
             // 
             // label4
             // 
@@ -543,7 +650,7 @@
             0,
             0,
             131072});
-            this.scnDetectValue.Location = new System.Drawing.Point(364, 158);
+            this.scnDetectValue.Location = new System.Drawing.Point(364, 238);
             this.scnDetectValue.Maximum = new decimal(new int[] {
             5,
             0,
@@ -566,7 +673,7 @@
             // sbsAllowAutoEnc
             // 
             this.sbsAllowAutoEnc.AutoSize = true;
-            this.sbsAllowAutoEnc.Location = new System.Drawing.Point(280, 220);
+            this.sbsAllowAutoEnc.Location = new System.Drawing.Point(280, 330);
             this.sbsAllowAutoEnc.Name = "sbsAllowAutoEnc";
             this.sbsAllowAutoEnc.Size = new System.Drawing.Size(15, 14);
             this.sbsAllowAutoEnc.TabIndex = 72;
@@ -575,7 +682,7 @@
             // dedupeSensLabel
             // 
             this.dedupeSensLabel.AutoSize = true;
-            this.dedupeSensLabel.Location = new System.Drawing.Point(536, 101);
+            this.dedupeSensLabel.Location = new System.Drawing.Point(536, 181);
             this.dedupeSensLabel.Margin = new System.Windows.Forms.Padding(3);
             this.dedupeSensLabel.Name = "dedupeSensLabel";
             this.dedupeSensLabel.Size = new System.Drawing.Size(57, 13);
@@ -585,7 +692,7 @@
             // label53
             // 
             this.label53.AutoSize = true;
-            this.label53.Location = new System.Drawing.Point(10, 220);
+            this.label53.Location = new System.Drawing.Point(10, 330);
             this.label53.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label53.Name = "label53";
             this.label53.Size = new System.Drawing.Size(203, 13);
@@ -603,7 +710,7 @@
             "Disabled",
             "Enabled (Keep Interpolated Frames)",
             "Enabled (Delete Frames Once Encoded)"});
-            this.autoEncMode.Location = new System.Drawing.Point(280, 187);
+            this.autoEncMode.Location = new System.Drawing.Point(280, 297);
             this.autoEncMode.Name = "autoEncMode";
             this.autoEncMode.Size = new System.Drawing.Size(250, 21);
             this.autoEncMode.TabIndex = 70;
@@ -611,7 +718,7 @@
             // label49
             // 
             this.label49.AutoSize = true;
-            this.label49.Location = new System.Drawing.Point(10, 190);
+            this.label49.Location = new System.Drawing.Point(10, 300);
             this.label49.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label49.Name = "label49";
             this.label49.Size = new System.Drawing.Size(206, 13);
@@ -622,7 +729,7 @@
             // 
             this.panel14.BackgroundImage = global::Flowframes.Properties.Resources.baseline_create_white_18dp_semiTransparent;
             this.panel14.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.panel14.Location = new System.Drawing.Point(475, 157);
+            this.panel14.Location = new System.Drawing.Point(475, 237);
             this.panel14.Name = "panel14";
             this.panel14.Size = new System.Drawing.Size(21, 21);
             this.panel14.TabIndex = 68;
@@ -632,7 +739,7 @@
             // 
             this.label52.AutoSize = true;
             this.label52.ForeColor = System.Drawing.Color.Silver;
-            this.label52.Location = new System.Drawing.Point(509, 162);
+            this.label52.Location = new System.Drawing.Point(509, 242);
             this.label52.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label52.Name = "label52";
             this.label52.Size = new System.Drawing.Size(225, 13);
@@ -642,7 +749,7 @@
             // label51
             // 
             this.label51.AutoSize = true;
-            this.label51.Location = new System.Drawing.Point(301, 161);
+            this.label51.Location = new System.Drawing.Point(301, 241);
             this.label51.Margin = new System.Windows.Forms.Padding(3);
             this.label51.Name = "label51";
             this.label51.Size = new System.Drawing.Size(57, 13);
@@ -652,7 +759,7 @@
             // scnDetect
             // 
             this.scnDetect.AutoSize = true;
-            this.scnDetect.Location = new System.Drawing.Point(280, 160);
+            this.scnDetect.Location = new System.Drawing.Point(280, 240);
             this.scnDetect.Name = "scnDetect";
             this.scnDetect.Size = new System.Drawing.Size(15, 14);
             this.scnDetect.TabIndex = 64;
@@ -661,17 +768,17 @@
             // label50
             // 
             this.label50.AutoSize = true;
-            this.label50.Location = new System.Drawing.Point(10, 160);
+            this.label50.Location = new System.Drawing.Point(10, 240);
             this.label50.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label50.Name = "label50";
-            this.label50.Size = new System.Drawing.Size(194, 13);
+            this.label50.Size = new System.Drawing.Size(129, 13);
             this.label50.TabIndex = 63;
-            this.label50.Text = "Don\'t Interpolate Scene Changes (Cuts)";
+            this.label50.Text = "Fix Scene Changes (Cuts)";
             // 
             // mpDedupePanel
             // 
             this.mpDedupePanel.Controls.Add(this.mpdecimateMode);
-            this.mpDedupePanel.Location = new System.Drawing.Point(599, 97);
+            this.mpDedupePanel.Location = new System.Drawing.Point(599, 177);
             this.mpDedupePanel.Margin = new System.Windows.Forms.Padding(0);
             this.mpDedupePanel.Name = "mpDedupePanel";
             this.mpDedupePanel.Size = new System.Drawing.Size(135, 21);
@@ -697,7 +804,7 @@
             // 
             this.magickDedupePanel.Controls.Add(this.dedupThresh);
             this.magickDedupePanel.Controls.Add(this.panel3);
-            this.magickDedupePanel.Location = new System.Drawing.Point(599, 97);
+            this.magickDedupePanel.Location = new System.Drawing.Point(599, 177);
             this.magickDedupePanel.Margin = new System.Windows.Forms.Padding(0);
             this.magickDedupePanel.Name = "magickDedupePanel";
             this.magickDedupePanel.Size = new System.Drawing.Size(135, 21);
@@ -751,14 +858,14 @@
             this.label24.Location = new System.Drawing.Point(10, 10);
             this.label24.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label24.Name = "label24";
-            this.label24.Size = new System.Drawing.Size(120, 16);
+            this.label24.Size = new System.Drawing.Size(88, 16);
             this.label24.TabIndex = 44;
-            this.label24.Text = "General Options";
+            this.label24.Text = "Input Media";
             // 
             // enableLoop
             // 
             this.enableLoop.AutoSize = true;
-            this.enableLoop.Location = new System.Drawing.Point(280, 130);
+            this.enableLoop.Location = new System.Drawing.Point(280, 210);
             this.enableLoop.Name = "enableLoop";
             this.enableLoop.Size = new System.Drawing.Size(15, 14);
             this.enableLoop.TabIndex = 31;
@@ -767,7 +874,7 @@
             // label15
             // 
             this.label15.AutoSize = true;
-            this.label15.Location = new System.Drawing.Point(10, 130);
+            this.label15.Location = new System.Drawing.Point(10, 210);
             this.label15.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label15.Name = "label15";
             this.label15.Size = new System.Drawing.Size(217, 13);
@@ -785,7 +892,7 @@
             "Disabled",
             "1: After Extraction - Slow, Accurate",
             "2: During Extraction - Fast, Less Accurate"});
-            this.dedupMode.Location = new System.Drawing.Point(280, 97);
+            this.dedupMode.Location = new System.Drawing.Point(280, 177);
             this.dedupMode.Name = "dedupMode";
             this.dedupMode.Size = new System.Drawing.Size(250, 21);
             this.dedupMode.TabIndex = 27;
@@ -794,7 +901,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(10, 100);
+            this.label2.Location = new System.Drawing.Point(10, 180);
             this.label2.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(139, 13);
@@ -849,7 +956,37 @@
             this.aiOptsPage.Controls.Add(this.label32);
             this.aiOptsPage.Name = "aiOptsPage";
             this.aiOptsPage.Size = new System.Drawing.Size(762, 419);
-            this.aiOptsPage.Text = "AI Specific Settings";
+            this.aiOptsPage.Text = "AI Specific Options";
+            // 
+            // label66
+            // 
+            this.label66.AutoSize = true;
+            this.label66.ForeColor = System.Drawing.Color.Silver;
+            this.label66.Location = new System.Drawing.Point(308, 211);
+            this.label66.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label66.Name = "label66";
+            this.label66.Size = new System.Drawing.Size(290, 13);
+            this.label66.TabIndex = 83;
+            this.label66.Text = "Only recommended for GeForce RTX or recent Tesla GPUs.";
+            // 
+            // rifeCudaFp16
+            // 
+            this.rifeCudaFp16.AutoSize = true;
+            this.rifeCudaFp16.Location = new System.Drawing.Point(280, 210);
+            this.rifeCudaFp16.Name = "rifeCudaFp16";
+            this.rifeCudaFp16.Size = new System.Drawing.Size(15, 14);
+            this.rifeCudaFp16.TabIndex = 82;
+            this.rifeCudaFp16.UseVisualStyleBackColor = true;
+            // 
+            // label65
+            // 
+            this.label65.AutoSize = true;
+            this.label65.Location = new System.Drawing.Point(11, 210);
+            this.label65.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label65.Name = "label65";
+            this.label65.Size = new System.Drawing.Size(120, 13);
+            this.label65.TabIndex = 81;
+            this.label65.Text = "Fast Mode (CUDA Only)";
             // 
             // label35
             // 
@@ -1101,7 +1238,12 @@
             // 
             // vidExportTab
             // 
+            this.vidExportTab.AutoScroll = true;
             this.vidExportTab.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.vidExportTab.Controls.Add(this.gifDitherType);
+            this.vidExportTab.Controls.Add(this.label73);
+            this.vidExportTab.Controls.Add(this.fixOutputDuration);
+            this.vidExportTab.Controls.Add(this.label72);
             this.vidExportTab.Controls.Add(this.minOutVidLength);
             this.vidExportTab.Controls.Add(this.aviColors);
             this.vidExportTab.Controls.Add(this.aviCodec);
@@ -1125,7 +1267,6 @@
             this.vidExportTab.Controls.Add(this.label20);
             this.vidExportTab.Controls.Add(this.label21);
             this.vidExportTab.Controls.Add(this.label19);
-            this.vidExportTab.Controls.Add(this.label18);
             this.vidExportTab.Controls.Add(this.gifColors);
             this.vidExportTab.Controls.Add(this.label17);
             this.vidExportTab.Controls.Add(this.label16);
@@ -1140,7 +1281,53 @@
             this.vidExportTab.Controls.Add(this.label8);
             this.vidExportTab.Name = "vidExportTab";
             this.vidExportTab.Size = new System.Drawing.Size(762, 419);
-            this.vidExportTab.Text = "Video Export";
+            this.vidExportTab.Text = "Export Options";
+            // 
+            // gifDitherType
+            // 
+            this.gifDitherType.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.gifDitherType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.gifDitherType.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.gifDitherType.ForeColor = System.Drawing.Color.White;
+            this.gifDitherType.FormattingEnabled = true;
+            this.gifDitherType.Items.AddRange(new object[] {
+            "bayer (Recommended)",
+            "floyd_steinberg (Might cause problems with transparency)",
+            "none (Strong banding, but better for flat colors)"});
+            this.gifDitherType.Location = new System.Drawing.Point(386, 417);
+            this.gifDitherType.Name = "gifDitherType";
+            this.gifDitherType.Size = new System.Drawing.Size(294, 21);
+            this.gifDitherType.TabIndex = 85;
+            // 
+            // label73
+            // 
+            this.label73.AutoSize = true;
+            this.label73.ForeColor = System.Drawing.Color.Silver;
+            this.label73.Location = new System.Drawing.Point(308, 160);
+            this.label73.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label73.Name = "label73";
+            this.label73.Size = new System.Drawing.Size(322, 13);
+            this.label73.TabIndex = 84;
+            this.label73.Text = "Repeats the last frame so the output is exactly as long as the input.";
+            // 
+            // fixOutputDuration
+            // 
+            this.fixOutputDuration.AutoSize = true;
+            this.fixOutputDuration.Location = new System.Drawing.Point(280, 160);
+            this.fixOutputDuration.Name = "fixOutputDuration";
+            this.fixOutputDuration.Size = new System.Drawing.Size(15, 14);
+            this.fixOutputDuration.TabIndex = 83;
+            this.fixOutputDuration.UseVisualStyleBackColor = true;
+            // 
+            // label72
+            // 
+            this.label72.AutoSize = true;
+            this.label72.Location = new System.Drawing.Point(10, 160);
+            this.label72.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label72.Name = "label72";
+            this.label72.Size = new System.Drawing.Size(172, 13);
+            this.label72.TabIndex = 76;
+            this.label72.Text = "Make Output Match Input Duration";
             // 
             // minOutVidLength
             // 
@@ -1173,7 +1360,7 @@
             "yuv422p",
             "yuv444p",
             "rgb24"});
-            this.aviColors.Location = new System.Drawing.Point(486, 357);
+            this.aviColors.Location = new System.Drawing.Point(486, 387);
             this.aviColors.Name = "aviColors";
             this.aviColors.Size = new System.Drawing.Size(194, 21);
             this.aviColors.TabIndex = 71;
@@ -1189,7 +1376,7 @@
             "ffv1",
             "huffyuv",
             "rawvideo"});
-            this.aviCodec.Location = new System.Drawing.Point(280, 357);
+            this.aviCodec.Location = new System.Drawing.Point(280, 387);
             this.aviCodec.Name = "aviCodec";
             this.aviCodec.Size = new System.Drawing.Size(200, 21);
             this.aviCodec.TabIndex = 70;
@@ -1197,7 +1384,7 @@
             // label60
             // 
             this.label60.AutoSize = true;
-            this.label60.Location = new System.Drawing.Point(10, 360);
+            this.label60.Location = new System.Drawing.Point(10, 390);
             this.label60.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label60.Name = "label60";
             this.label60.Size = new System.Drawing.Size(130, 13);
@@ -1218,7 +1405,7 @@
             "3 (HQ)",
             "4 (4444)",
             "5 (4444xq)"});
-            this.proResProfile.Location = new System.Drawing.Point(280, 327);
+            this.proResProfile.Location = new System.Drawing.Point(280, 357);
             this.proResProfile.Name = "proResProfile";
             this.proResProfile.Size = new System.Drawing.Size(400, 21);
             this.proResProfile.TabIndex = 68;
@@ -1226,7 +1413,7 @@
             // label59
             // 
             this.label59.AutoSize = true;
-            this.label59.Location = new System.Drawing.Point(10, 330);
+            this.label59.Location = new System.Drawing.Point(10, 360);
             this.label59.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label59.Name = "label59";
             this.label59.Size = new System.Drawing.Size(139, 13);
@@ -1237,7 +1424,7 @@
             // 
             this.panel11.BackgroundImage = global::Flowframes.Properties.Resources.baseline_create_white_18dp_semiTransparent;
             this.panel11.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.panel11.Location = new System.Drawing.Point(386, 297);
+            this.panel11.Location = new System.Drawing.Point(386, 327);
             this.panel11.Name = "panel11";
             this.panel11.Size = new System.Drawing.Size(21, 21);
             this.panel11.TabIndex = 66;
@@ -1247,7 +1434,7 @@
             // 
             this.label58.AutoSize = true;
             this.label58.ForeColor = System.Drawing.Color.Silver;
-            this.label58.Location = new System.Drawing.Point(420, 301);
+            this.label58.Location = new System.Drawing.Point(420, 331);
             this.label58.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label58.Name = "label58";
             this.label58.Size = new System.Drawing.Size(221, 13);
@@ -1267,7 +1454,7 @@
             "36",
             "40",
             "44"});
-            this.vp9Crf.Location = new System.Drawing.Point(280, 297);
+            this.vp9Crf.Location = new System.Drawing.Point(280, 327);
             this.vp9Crf.Name = "vp9Crf";
             this.vp9Crf.Size = new System.Drawing.Size(100, 21);
             this.vp9Crf.TabIndex = 64;
@@ -1275,7 +1462,7 @@
             // label57
             // 
             this.label57.AutoSize = true;
-            this.label57.Location = new System.Drawing.Point(10, 300);
+            this.label57.Location = new System.Drawing.Point(10, 330);
             this.label57.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label57.Name = "label57";
             this.label57.Size = new System.Drawing.Size(176, 13);
@@ -1331,7 +1518,7 @@
             // 
             this.panel5.BackgroundImage = global::Flowframes.Properties.Resources.baseline_create_white_18dp_semiTransparent;
             this.panel5.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.panel5.Location = new System.Drawing.Point(386, 267);
+            this.panel5.Location = new System.Drawing.Point(386, 297);
             this.panel5.Name = "panel5";
             this.panel5.Size = new System.Drawing.Size(21, 21);
             this.panel5.TabIndex = 58;
@@ -1341,7 +1528,7 @@
             // 
             this.panel4.BackgroundImage = global::Flowframes.Properties.Resources.baseline_create_white_18dp_semiTransparent;
             this.panel4.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
-            this.panel4.Location = new System.Drawing.Point(386, 237);
+            this.panel4.Location = new System.Drawing.Point(386, 267);
             this.panel4.Name = "panel4";
             this.panel4.Size = new System.Drawing.Size(21, 21);
             this.panel4.TabIndex = 57;
@@ -1379,9 +1566,9 @@
             this.label22.Location = new System.Drawing.Point(420, 101);
             this.label22.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label22.Name = "label22";
-            this.label22.Size = new System.Drawing.Size(325, 13);
+            this.label22.Size = new System.Drawing.Size(269, 13);
             this.label22.TabIndex = 48;
-            this.label22.Text = "Limit the final output video to this frame rate (FPS). Use 0 to disable.";
+            this.label22.Text = "Limit the final output video to this FPS. Use 0 to disable.";
             // 
             // maxFps
             // 
@@ -1424,23 +1611,12 @@
             // 
             this.label19.AutoSize = true;
             this.label19.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label19.Location = new System.Drawing.Point(10, 180);
+            this.label19.Location = new System.Drawing.Point(10, 210);
             this.label19.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label19.Name = "label19";
             this.label19.Size = new System.Drawing.Size(130, 16);
             this.label19.TabIndex = 43;
             this.label19.Text = "Encoding Options";
-            // 
-            // label18
-            // 
-            this.label18.AutoSize = true;
-            this.label18.ForeColor = System.Drawing.Color.Silver;
-            this.label18.Location = new System.Drawing.Point(393, 391);
-            this.label18.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label18.Name = "label18";
-            this.label18.Size = new System.Drawing.Size(208, 13);
-            this.label18.TabIndex = 42;
-            this.label18.Text = "More colors increase the file size noticably.";
             // 
             // gifColors
             // 
@@ -1450,11 +1626,12 @@
             this.gifColors.ForeColor = System.Drawing.Color.White;
             this.gifColors.FormattingEnabled = true;
             this.gifColors.Items.AddRange(new object[] {
+            "256 (Max)",
             "128 (High)",
             "64 (Medium)",
             "32 (Low)",
             "16 (Very Low)"});
-            this.gifColors.Location = new System.Drawing.Point(280, 387);
+            this.gifColors.Location = new System.Drawing.Point(280, 417);
             this.gifColors.Name = "gifColors";
             this.gifColors.Size = new System.Drawing.Size(100, 21);
             this.gifColors.TabIndex = 41;
@@ -1462,18 +1639,18 @@
             // label17
             // 
             this.label17.AutoSize = true;
-            this.label17.Location = new System.Drawing.Point(10, 390);
+            this.label17.Location = new System.Drawing.Point(10, 420);
             this.label17.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(154, 13);
+            this.label17.Size = new System.Drawing.Size(173, 13);
             this.label17.TabIndex = 40;
-            this.label17.Text = "GIF: Color Quality (Palette Size)";
+            this.label17.Text = "GIF: Color Amount / Dithering Type";
             // 
             // label16
             // 
             this.label16.AutoSize = true;
             this.label16.ForeColor = System.Drawing.Color.Silver;
-            this.label16.Location = new System.Drawing.Point(420, 271);
+            this.label16.Location = new System.Drawing.Point(420, 301);
             this.label16.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label16.Name = "label16";
             this.label16.Size = new System.Drawing.Size(224, 13);
@@ -1484,7 +1661,7 @@
             // 
             this.label14.AutoSize = true;
             this.label14.ForeColor = System.Drawing.Color.Silver;
-            this.label14.Location = new System.Drawing.Point(420, 241);
+            this.label14.Location = new System.Drawing.Point(420, 271);
             this.label14.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label14.Name = "label14";
             this.label14.Size = new System.Drawing.Size(82, 13);
@@ -1494,12 +1671,12 @@
             // label13
             // 
             this.label13.AutoSize = true;
-            this.label13.Location = new System.Drawing.Point(10, 270);
+            this.label13.Location = new System.Drawing.Point(10, 300);
             this.label13.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label13.Name = "label13";
-            this.label13.Size = new System.Drawing.Size(168, 13);
+            this.label13.Size = new System.Drawing.Size(196, 13);
             this.label13.TabIndex = 37;
-            this.label13.Text = "MP4: Quality Level (CRF) for h265";
+            this.label13.Text = "MP4/MKV: Quality Level (CRF) for h265";
             // 
             // h265Crf
             // 
@@ -1513,7 +1690,7 @@
             "28",
             "32",
             "36"});
-            this.h265Crf.Location = new System.Drawing.Point(280, 267);
+            this.h265Crf.Location = new System.Drawing.Point(280, 297);
             this.h265Crf.Name = "h265Crf";
             this.h265Crf.Size = new System.Drawing.Size(100, 21);
             this.h265Crf.TabIndex = 36;
@@ -1530,7 +1707,7 @@
             "24",
             "28",
             "32"});
-            this.h264Crf.Location = new System.Drawing.Point(280, 237);
+            this.h264Crf.Location = new System.Drawing.Point(280, 267);
             this.h264Crf.Name = "h264Crf";
             this.h264Crf.Size = new System.Drawing.Size(100, 21);
             this.h264Crf.TabIndex = 35;
@@ -1538,12 +1715,12 @@
             // label12
             // 
             this.label12.AutoSize = true;
-            this.label12.Location = new System.Drawing.Point(10, 240);
+            this.label12.Location = new System.Drawing.Point(10, 270);
             this.label12.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label12.Name = "label12";
-            this.label12.Size = new System.Drawing.Size(168, 13);
+            this.label12.Size = new System.Drawing.Size(196, 13);
             this.label12.TabIndex = 34;
-            this.label12.Text = "MP4: Quality Level (CRF) for h264";
+            this.label12.Text = "MP4/MKV: Quality Level (CRF) for h264";
             // 
             // mp4Enc
             // 
@@ -1557,7 +1734,7 @@
             "h265 - Slower, mixed compatibility, very good quality per filesize",
             "h264 NVENC - Fast GPU-accelerated encoding, worse compression than h264",
             "h265 NVENC - Fast GPU-accelerated encoding, worse compression than h265"});
-            this.mp4Enc.Location = new System.Drawing.Point(280, 207);
+            this.mp4Enc.Location = new System.Drawing.Point(280, 237);
             this.mp4Enc.Name = "mp4Enc";
             this.mp4Enc.Size = new System.Drawing.Size(400, 21);
             this.mp4Enc.TabIndex = 33;
@@ -1565,12 +1742,12 @@
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(10, 210);
+            this.label10.Location = new System.Drawing.Point(10, 240);
             this.label10.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(96, 13);
+            this.label10.Size = new System.Drawing.Size(124, 13);
             this.label10.TabIndex = 32;
-            this.label10.Text = "MP4: Video Codec";
+            this.label10.Text = "MP4/MKV: Video Codec";
             // 
             // label9
             // 
@@ -1579,9 +1756,9 @@
             this.label9.Location = new System.Drawing.Point(420, 41);
             this.label9.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(328, 13);
+            this.label9.Size = new System.Drawing.Size(308, 13);
             this.label9.TabIndex = 31;
-            this.label9.Text = "The output will be looped until it meets the specified minimum length.";
+            this.label9.Text = "Output will be looped until it meets the specified minimum length.";
             // 
             // label8
             // 
@@ -1596,8 +1773,11 @@
             // debugTab
             // 
             this.debugTab.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(48)))), ((int)(((byte)(48)))));
+            this.debugTab.Controls.Add(this.pictureBox1);
+            this.debugTab.Controls.Add(this.audioSubTransferMode);
+            this.debugTab.Controls.Add(this.label70);
             this.debugTab.Controls.Add(this.panel13);
-            this.debugTab.Controls.Add(this.modelsBaseUrl);
+            this.debugTab.Controls.Add(this.mdlBaseUrl);
             this.debugTab.Controls.Add(this.label42);
             this.debugTab.Controls.Add(this.ffEncArgs);
             this.debugTab.Controls.Add(this.label56);
@@ -1607,9 +1787,6 @@
             this.debugTab.Controls.Add(this.label47);
             this.debugTab.Controls.Add(this.label46);
             this.debugTab.Controls.Add(this.label45);
-            this.debugTab.Controls.Add(this.label41);
-            this.debugTab.Controls.Add(this.ffprobeCountFrames);
-            this.debugTab.Controls.Add(this.label40);
             this.debugTab.Controls.Add(this.label38);
             this.debugTab.Controls.Add(this.ffEncThreads);
             this.debugTab.Controls.Add(this.label37);
@@ -1620,7 +1797,43 @@
             this.debugTab.Controls.Add(this.cmdDebugMode);
             this.debugTab.Name = "debugTab";
             this.debugTab.Size = new System.Drawing.Size(762, 419);
-            this.debugTab.Text = "Debugging / Experimental";
+            this.debugTab.Text = "Developer Options";
+            // 
+            // pictureBox1
+            // 
+            this.pictureBox1.BackgroundImage = global::Flowframes.Properties.Resources.questmark_72px_bordeer;
+            this.pictureBox1.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.pictureBox1.Location = new System.Drawing.Point(563, 97);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(29, 21);
+            this.pictureBox1.TabIndex = 90;
+            this.pictureBox1.TabStop = false;
+            this.toolTip1.SetToolTip(this.pictureBox1, resources.GetString("pictureBox1.ToolTip"));
+            // 
+            // audioSubTransferMode
+            // 
+            this.audioSubTransferMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.audioSubTransferMode.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.audioSubTransferMode.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.audioSubTransferMode.ForeColor = System.Drawing.Color.White;
+            this.audioSubTransferMode.FormattingEnabled = true;
+            this.audioSubTransferMode.Items.AddRange(new object[] {
+            "Copy Streams Directly From Input Video",
+            "Extract, Interpolate, Then Merge (Works even if input video was deleted)"});
+            this.audioSubTransferMode.Location = new System.Drawing.Point(280, 179);
+            this.audioSubTransferMode.Name = "audioSubTransferMode";
+            this.audioSubTransferMode.Size = new System.Drawing.Size(400, 21);
+            this.audioSubTransferMode.TabIndex = 89;
+            // 
+            // label70
+            // 
+            this.label70.AutoSize = true;
+            this.label70.Location = new System.Drawing.Point(10, 182);
+            this.label70.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label70.Name = "label70";
+            this.label70.Size = new System.Drawing.Size(165, 13);
+            this.label70.TabIndex = 88;
+            this.label70.Text = "Audio And Subtitle Merging Mode";
             // 
             // panel13
             // 
@@ -1632,20 +1845,21 @@
             this.panel13.TabIndex = 61;
             this.toolTip1.SetToolTip(this.panel13, "Allows custom input.");
             // 
-            // modelsBaseUrl
+            // mdlBaseUrl
             // 
-            this.modelsBaseUrl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.modelsBaseUrl.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.modelsBaseUrl.ForeColor = System.Drawing.Color.White;
-            this.modelsBaseUrl.FormattingEnabled = true;
-            this.modelsBaseUrl.Items.AddRange(new object[] {
+            this.mdlBaseUrl.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.mdlBaseUrl.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.mdlBaseUrl.ForeColor = System.Drawing.Color.White;
+            this.mdlBaseUrl.FormattingEnabled = true;
+            this.mdlBaseUrl.Items.AddRange(new object[] {
             "https://dl.nmkd.de/flowframes/mdl/",
             "http://45.132.246.240/dl/flowframes/mdl/",
+            "https://raw.githubusercontent.com/n00mkrad/flowframes/main/Models/",
             "http://104.225.145.33/models/"});
-            this.modelsBaseUrl.Location = new System.Drawing.Point(280, 97);
-            this.modelsBaseUrl.Name = "modelsBaseUrl";
-            this.modelsBaseUrl.Size = new System.Drawing.Size(250, 21);
-            this.modelsBaseUrl.TabIndex = 87;
+            this.mdlBaseUrl.Location = new System.Drawing.Point(280, 97);
+            this.mdlBaseUrl.Name = "mdlBaseUrl";
+            this.mdlBaseUrl.Size = new System.Drawing.Size(250, 21);
+            this.mdlBaseUrl.TabIndex = 87;
             // 
             // label42
             // 
@@ -1661,21 +1875,21 @@
             // 
             this.ffEncArgs.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ffEncArgs.ForeColor = System.Drawing.Color.White;
-            this.ffEncArgs.Location = new System.Drawing.Point(280, 240);
+            this.ffEncArgs.Location = new System.Drawing.Point(280, 270);
             this.ffEncArgs.MinimumSize = new System.Drawing.Size(4, 21);
             this.ffEncArgs.Name = "ffEncArgs";
-            this.ffEncArgs.Size = new System.Drawing.Size(250, 20);
+            this.ffEncArgs.Size = new System.Drawing.Size(400, 21);
             this.ffEncArgs.TabIndex = 85;
             // 
             // label56
             // 
             this.label56.AutoSize = true;
-            this.label56.Location = new System.Drawing.Point(10, 243);
+            this.label56.Location = new System.Drawing.Point(10, 273);
             this.label56.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label56.Name = "label56";
-            this.label56.Size = new System.Drawing.Size(154, 13);
+            this.label56.Size = new System.Drawing.Size(147, 13);
             this.label56.TabIndex = 84;
-            this.label56.Text = "Additional Encoding Arguments";
+            this.label56.Text = "Additional (Output) Arguments";
             // 
             // label48
             // 
@@ -1692,7 +1906,7 @@
             // 
             this.label54.AutoSize = true;
             this.label54.ForeColor = System.Drawing.Color.Silver;
-            this.label54.Location = new System.Drawing.Point(543, 214);
+            this.label54.Location = new System.Drawing.Point(543, 244);
             this.label54.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label54.Name = "label54";
             this.label54.Size = new System.Drawing.Size(118, 13);
@@ -1714,7 +1928,7 @@
             "slow",
             "slower",
             "veryslow"});
-            this.ffEncPreset.Location = new System.Drawing.Point(280, 210);
+            this.ffEncPreset.Location = new System.Drawing.Point(280, 240);
             this.ffEncPreset.Name = "ffEncPreset";
             this.ffEncPreset.Size = new System.Drawing.Size(250, 21);
             this.ffEncPreset.TabIndex = 78;
@@ -1722,7 +1936,7 @@
             // label47
             // 
             this.label47.AutoSize = true;
-            this.label47.Location = new System.Drawing.Point(10, 213);
+            this.label47.Location = new System.Drawing.Point(10, 243);
             this.label47.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label47.Name = "label47";
             this.label47.Size = new System.Drawing.Size(145, 13);
@@ -1751,42 +1965,11 @@
             this.label45.TabIndex = 75;
             this.label45.Text = "General";
             // 
-            // label41
-            // 
-            this.label41.AutoSize = true;
-            this.label41.ForeColor = System.Drawing.Color.Silver;
-            this.label41.Location = new System.Drawing.Point(308, 273);
-            this.label41.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label41.Name = "label41";
-            this.label41.Size = new System.Drawing.Size(395, 13);
-            this.label41.TabIndex = 74;
-            this.label41.Text = "Use alternative method to get the amount of total frames. Slower, but more reliab" +
-    "le.";
-            // 
-            // ffprobeCountFrames
-            // 
-            this.ffprobeCountFrames.AutoSize = true;
-            this.ffprobeCountFrames.Location = new System.Drawing.Point(280, 273);
-            this.ffprobeCountFrames.Name = "ffprobeCountFrames";
-            this.ffprobeCountFrames.Size = new System.Drawing.Size(15, 14);
-            this.ffprobeCountFrames.TabIndex = 73;
-            this.ffprobeCountFrames.UseVisualStyleBackColor = true;
-            // 
-            // label40
-            // 
-            this.label40.AutoSize = true;
-            this.label40.Location = new System.Drawing.Point(10, 273);
-            this.label40.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label40.Name = "label40";
-            this.label40.Size = new System.Drawing.Size(162, 13);
-            this.label40.TabIndex = 72;
-            this.label40.Text = "FFprobe: Count Frames Manually";
-            // 
             // label38
             // 
             this.label38.AutoSize = true;
             this.label38.ForeColor = System.Drawing.Color.Silver;
-            this.label38.Location = new System.Drawing.Point(543, 186);
+            this.label38.Location = new System.Drawing.Point(543, 216);
             this.label38.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label38.Name = "label38";
             this.label38.Size = new System.Drawing.Size(131, 13);
@@ -1797,7 +1980,7 @@
             // 
             this.ffEncThreads.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.ffEncThreads.ForeColor = System.Drawing.Color.White;
-            this.ffEncThreads.Location = new System.Drawing.Point(280, 183);
+            this.ffEncThreads.Location = new System.Drawing.Point(280, 210);
             this.ffEncThreads.MinimumSize = new System.Drawing.Size(4, 21);
             this.ffEncThreads.Name = "ffEncThreads";
             this.ffEncThreads.Size = new System.Drawing.Size(250, 20);
@@ -1806,7 +1989,7 @@
             // label37
             // 
             this.label37.AutoSize = true;
-            this.label37.Location = new System.Drawing.Point(10, 183);
+            this.label37.Location = new System.Drawing.Point(10, 213);
             this.label37.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
             this.label37.Name = "label37";
             this.label37.Size = new System.Drawing.Size(204, 13);
@@ -1890,35 +2073,47 @@
             this.titleLabel.TabIndex = 1;
             this.titleLabel.Text = "Settings";
             // 
-            // label65
+            // label18
             // 
-            this.label65.AutoSize = true;
-            this.label65.Location = new System.Drawing.Point(11, 210);
-            this.label65.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label65.Name = "label65";
-            this.label65.Size = new System.Drawing.Size(120, 13);
-            this.label65.TabIndex = 81;
-            this.label65.Text = "Fast Mode (CUDA Only)";
+            this.label18.AutoSize = true;
+            this.label18.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label18.Location = new System.Drawing.Point(10, 150);
+            this.label18.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label18.Name = "label18";
+            this.label18.Size = new System.Drawing.Size(153, 16);
+            this.label18.TabIndex = 82;
+            this.label18.Text = "Interpolation Helpers";
             // 
-            // rifeCudaFp16
+            // jpegFrames
             // 
-            this.rifeCudaFp16.AutoSize = true;
-            this.rifeCudaFp16.Location = new System.Drawing.Point(280, 210);
-            this.rifeCudaFp16.Name = "rifeCudaFp16";
-            this.rifeCudaFp16.Size = new System.Drawing.Size(15, 14);
-            this.rifeCudaFp16.TabIndex = 82;
-            this.rifeCudaFp16.UseVisualStyleBackColor = true;
+            this.jpegFrames.AutoSize = true;
+            this.jpegFrames.Location = new System.Drawing.Point(280, 100);
+            this.jpegFrames.Name = "jpegFrames";
+            this.jpegFrames.Size = new System.Drawing.Size(15, 14);
+            this.jpegFrames.TabIndex = 85;
+            this.jpegFrames.UseVisualStyleBackColor = true;
             // 
-            // label66
+            // label63
             // 
-            this.label66.AutoSize = true;
-            this.label66.ForeColor = System.Drawing.Color.Silver;
-            this.label66.Location = new System.Drawing.Point(308, 211);
-            this.label66.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
-            this.label66.Name = "label66";
-            this.label66.Size = new System.Drawing.Size(290, 13);
-            this.label66.TabIndex = 83;
-            this.label66.Text = "Only recommended for GeForce RTX or recent Tesla GPUs.";
+            this.label63.AutoSize = true;
+            this.label63.Location = new System.Drawing.Point(10, 100);
+            this.label63.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label63.Name = "label63";
+            this.label63.Size = new System.Drawing.Size(170, 13);
+            this.label63.TabIndex = 84;
+            this.label63.Text = "Import HQ JPEGs instead of PNGs";
+            // 
+            // label74
+            // 
+            this.label74.AutoSize = true;
+            this.label74.ForeColor = System.Drawing.Color.Silver;
+            this.label74.Location = new System.Drawing.Point(308, 100);
+            this.label74.Margin = new System.Windows.Forms.Padding(10, 10, 10, 7);
+            this.label74.Name = "label74";
+            this.label74.Size = new System.Drawing.Size(433, 13);
+            this.label74.TabIndex = 86;
+            this.label74.Text = "Makes frame extraction faster and take up less disk space with no visible quality" +
+    " reduction.";
             // 
             // SettingsForm
             // 
@@ -1928,7 +2123,7 @@
             this.ClientSize = new System.Drawing.Size(944, 501);
             this.Controls.Add(this.titleLabel);
             this.Controls.Add(this.settingsTabList);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.Name = "SettingsForm";
@@ -1939,6 +2134,7 @@
             this.settingsTabList.ResumeLayout(false);
             this.generalTab.ResumeLayout(false);
             this.generalTab.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.info1)).EndInit();
             this.tabListPage2.ResumeLayout(false);
             this.tabListPage2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.scnDetectValue)).EndInit();
@@ -1953,6 +2149,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.minOutVidLength)).EndInit();
             this.debugTab.ResumeLayout(false);
             this.debugTab.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1983,7 +2180,6 @@
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.ComboBox mp4Enc;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.Label label18;
         private System.Windows.Forms.ComboBox gifColors;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.Label label16;
@@ -2030,9 +2226,6 @@
         private System.Windows.Forms.TextBox ffEncThreads;
         private System.Windows.Forms.ComboBox processingMode;
         private System.Windows.Forms.Label label39;
-        private System.Windows.Forms.Label label41;
-        private System.Windows.Forms.CheckBox ffprobeCountFrames;
-        private System.Windows.Forms.Label label40;
         private System.Windows.Forms.Panel mpDedupePanel;
         private System.Windows.Forms.ComboBox mpdecimateMode;
         private System.Windows.Forms.Panel magickDedupePanel;
@@ -2074,8 +2267,6 @@
         private System.Windows.Forms.Label label62;
         private System.Windows.Forms.CheckBox clearLogOnInput;
         private System.Windows.Forms.Label label61;
-        private System.Windows.Forms.CheckBox modelSuffix;
-        private System.Windows.Forms.Label label63;
         private System.Windows.Forms.Label label64;
         private HTAlt.WinForms.HTButton clearModelCacheBtn;
         private System.Windows.Forms.NumericUpDown scnDetectValue;
@@ -2091,11 +2282,31 @@
         private System.Windows.Forms.ComboBox dainNcnnTilesize;
         private System.Windows.Forms.Label label27;
         private System.Windows.Forms.Label label26;
-        private System.Windows.Forms.ComboBox modelsBaseUrl;
+        private System.Windows.Forms.ComboBox mdlBaseUrl;
         private System.Windows.Forms.Label label42;
         private System.Windows.Forms.Panel panel13;
         private System.Windows.Forms.CheckBox rifeCudaFp16;
         private System.Windows.Forms.Label label65;
         private System.Windows.Forms.Label label66;
+        private System.Windows.Forms.TextBox exportNamePattern;
+        private System.Windows.Forms.Label label67;
+        private System.Windows.Forms.PictureBox info1;
+        private System.Windows.Forms.TextBox exportNamePatternLoop;
+        private System.Windows.Forms.Label label69;
+        private System.Windows.Forms.Label label68;
+        private System.Windows.Forms.Label label70;
+        private System.Windows.Forms.ComboBox audioSubTransferMode;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.ComboBox sceneChangeFillMode;
+        private System.Windows.Forms.Label label71;
+        private System.Windows.Forms.Label label73;
+        private System.Windows.Forms.CheckBox fixOutputDuration;
+        private System.Windows.Forms.Label label72;
+        private System.Windows.Forms.ComboBox gifDitherType;
+        private System.Windows.Forms.CheckBox keepMeta;
+        private System.Windows.Forms.Label label18;
+        private System.Windows.Forms.Label label74;
+        private System.Windows.Forms.CheckBox jpegFrames;
+        private System.Windows.Forms.Label label63;
     }
 }
